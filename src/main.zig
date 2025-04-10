@@ -5,7 +5,7 @@ const std = @import("std");
 const builtin = @import("builtin");
 
 /// This imports the separate module containing `root.zig`. Take a look in `build.zig` for details.
-const lib = @import("libvips");
+const lib = @import("vips");
 
 var debug_allocator: std.heap.DebugAllocator(.{}) = .init;
 pub fn main() !void {

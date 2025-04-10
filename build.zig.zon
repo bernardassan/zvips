@@ -4,25 +4,35 @@
     .fingerprint = 0xf212d5cf70d9945f, // Changing this has security and trust implications.
     .minimum_zig_version = "0.15.0-dev.208+8acedfd5b",
     .dependencies = .{
+        .gobject = .{
+            .url = "https://github.com/ianprime0509/zig-gobject/archive/9500e7f21eb6858f78ea5eda26c90b0cc2ccdbbd.tar.gz",
+            .hash = "gobject_codegen-0.3.0-B33qzcS-BgB8CppArgKrHAS6dDmk7R1NEQJeVcsm6GLd",
+            .lazy = false,
+        },
         .libvips = .{
-            .url = "https://github.com/libvips/libvips/archive/refs/tags/v8.16.1.tar.gz",
-            .hash = "N-V-__8AANxYCAP8DizDP8302N3hHfrYKrr4q8DBQaAF3bxn",
-            .lazy = false,
+            .path = "zig-out/bindings",
         },
-        .libexpat = .{
-            .url = "https://github.com/libexpat/libexpat/archive/refs/tags/R_2_7_1.tar.gz",
-            .hash = "N-V-__8AAMX2GwiF4I3vxSUHX70z0UP4G2EwLiT2Q9eNGkwN",
-            .lazy = false,
-        },
-        .glib = .{
-            .url = "git+https://gitlab.gnome.org/GNOME/glib#2.84.1",
-            .lazy = false,
-        },
+
+        // .libvips = .{
+        //     .url = "https://github.com/libvips/libvips/archive/refs/tags/v8.16.1.tar.gz",
+        //     .hash = "N-V-__8AANxYCAP8DizDP8302N3hHfrYKrr4q8DBQaAF3bxn",
+        //     .lazy = false,
+        // },
+        // .libexpat = .{
+        //     .url = "https://github.com/libexpat/libexpat/archive/refs/tags/R_2_7_1.tar.gz",
+        //     .hash = "N-V-__8AAMX2GwiF4I3vxSUHX70z0UP4G2EwLiT2Q9eNGkwN",
+        //     .lazy = false,
+        // },
+        // .glib = .{
+        //     .url = "https://github.com/GNOME/glib/archive/refs/tags/2.84.1.tar.gz",
+        //     .lazy = false,
+        // },
     },
     .paths = .{
         "build.zig",
         "build.zig.zon",
         "src",
+        "gir",
         "LICENSE",
         "README.md",
     },
