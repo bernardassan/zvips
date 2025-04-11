@@ -18,6 +18,8 @@ pub fn build(b: *std.Build) void {
     const gobject = b.dependency("gobject", .{
         .target = target,
         .optimize = optimize,
+        // .@"gir-files-path" = @as([]const u8, "gir/"),
+        // .@"gir-files-path" = @as([]const u8, "gir/"),
         .modules = @as([]const []const u8, &.{
             // "GLib-2.0",
             // "GObject-2.0",
@@ -26,29 +28,34 @@ pub fn build(b: *std.Build) void {
         }),
     });
 
-    const translate_gir = gobject.artifact("translate-gir");
-    const codegen = b.addRunArtifact(translate_gir);
-    const output = codegen.addPrefixedOutputDirectoryArg("--output-dir=", "bindings");
-    codegen.addPrefixedDirectoryArg("--gir-fixes-dir=", gobject.path("gir-fixes"));
-    codegen.addPrefixedDirectoryArg("--gir-dir=", std.Build.LazyPath{ .cwd_relative = "/usr/share/gir-1.0/" });
-    codegen.addPrefixedDirectoryArg("--gir-dir=", b.path("gir/"));
-    codegen.addPrefixedDirectoryArg("--bindings-dir=", gobject.path("binding-overrides"));
-    codegen.addPrefixedDirectoryArg("--extensions-dir=", gobject.path("extensions"));
-    codegen.addArgs(&.{"Vips-8.0"});
-    // This is needed to tell Zig that the command run can be cached despite
-    // having output files.
-    codegen.expectExitCode(0);
+    // const translate_gir = gobject.artifact("translate-gir");
+    // const codegen = b.addRunArtifact(translate_gir);
+    // const output = codegen.addPrefixedOutputDirectoryArg("--output-dir=", "bindings");
+    // codegen.addPrefixedDirectoryArg("--gir-fixes-dir=", gobject.path("gir-fixes"));
+    // codegen.addPrefixedDirectoryArg("--gir-dir=", std.Build.LazyPath{ .cwd_relative = "/usr/share/gir-1.0/" });
+    // codegen.addPrefixedDirectoryArg("--gir-dir=", b.path("gir/"));
+    // codegen.addPrefixedDirectoryArg("--bindings-dir=", gobject.path("binding-overrides"));
+    // codegen.addPrefixedDirectoryArg("--extensions-dir=", gobject.path("extensions"));
+    // codegen.addArgs(&.{"Vips-8.0"});
+    // // This is needed to tell Zig that the command run can be cached despite
+    // // having output files.
+    // codegen.expectExitCode(0);
 
-    b.installDirectory(.{
-        .source_dir = output,
-        .install_dir = .prefix,
-        .install_subdir = "bindings",
-    });
+    const dep_codegen = gobject.builder.top_level_steps.get("codegen").?;
+    const my_codegen = b.step("codegen", "Do codegent");
 
-    const vips = b.dependency("libvips", .{
-        .target = target,
-        .optimize = optimize,
-    });
+    my_codegen.dependOn(&dep_codegen.step);
+
+    // b.installDirectory(.{
+    //     .source_dir = output,
+    //     .install_dir = .prefix,
+    //     .install_subdir = "bindings",
+    // });
+
+    // const vips = b.dependency("libvips", .{
+    //     .target = target,
+    //     .optimize = optimize,
+    // });
 
     const exe_mod = b.createModule(.{
         .root_source_file = b.path("src/main.zig"),
@@ -57,7 +64,7 @@ pub fn build(b: *std.Build) void {
         .link_libc = true,
         .strip = strip,
     });
-    exe_mod.addImport("vips", vips.module("vips8"));
+    // exe_mod.addImport("vips", vips.module("vips8"));
 
     const exe = b.addExecutable(.{
         .name = "libvips",
