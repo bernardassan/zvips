@@ -10,7 +10,7 @@
             .lazy = false,
         },
         .libvips = .{
-            .path = "zig-out/bindings",
+            .path = "bindings",
         },
 
         // .libvips = .{

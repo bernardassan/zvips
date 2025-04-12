@@ -18,8 +18,7 @@ pub fn build(b: *std.Build) void {
     const gobject = b.dependency("gobject", .{
         .target = target,
         .optimize = optimize,
-        // .@"gir-files-path" = @as([]const u8, "gir/"),
-        // .@"gir-files-path" = @as([]const u8, "gir/"),
+        .@"gir-files-path" = @as([]const u8, "/usr/share/gir-1.0/"),
         .modules = @as([]const []const u8, &.{
             // "GLib-2.0",
             // "GObject-2.0",
@@ -44,7 +43,34 @@ pub fn build(b: *std.Build) void {
     const dep_codegen = gobject.builder.top_level_steps.get("codegen").?;
     const my_codegen = b.step("codegen", "Do codegent");
 
-    my_codegen.dependOn(&dep_codegen.step);
+    const codegenInstallDirectoryLazyPath = struct {
+        pub fn dependencyLazyPath(top_level_step: *std.Build.Step, sub_dir: []const u8) *std.Build.LazyPath {
+            var found: ?*std.Build.LazyPath = null;
+            for (top_level_step.dependencies.items) |dep_step| {
+                const inst = dep_step.cast(std.Build.Step.InstallDir) orelse continue;
+                if (std.mem.eql(u8, inst.options.install_subdir, sub_dir)) {
+                    if (found != null) std.debug.panic("sub_dir name '{s}' is ambiguous", .{sub_dir});
+                    found = &inst.options.source_dir;
+                }
+            }
+            return found orelse {
+                for (top_level_step.dependencies.items) |dep_step| {
+                    const inst = dep_step.cast(std.Build.Step.InstallDir) orelse continue;
+                    std.log.info("available LazyPath: '{any}'", .{inst.options.source_dir});
+                }
+                std.debug.panic("unable to find artifact '{any}'", .{sub_dir});
+            };
+        }
+    }.dependencyLazyPath;
+
+    const generated_binding_path = codegenInstallDirectoryLazyPath(&dep_codegen.step, "bindings");
+    const install_bindings = b.addInstallDirectory(.{
+        .install_dir = .{ .custom = "" },
+        .install_subdir = "../bindings",
+        .source_dir = generated_binding_path.*,
+    });
+
+    my_codegen.dependOn(&install_bindings.step);
 
     // b.installDirectory(.{
     //     .source_dir = output,
