@@ -1,11 +1,6 @@
-//! By convention, main.zig is where your main function lives in the case that
-//! you are building an executable. If you are making a library, the convention
-//! is to delete this file and start with root.zig instead.
 const std = @import("std");
 const builtin = @import("builtin");
-
-/// This imports the separate module containing `root.zig`. Take a look in `build.zig` for details.
-const lib = @import("vips");
+const vips = @import("vips");
 
 var debug_allocator: std.heap.DebugAllocator(.{}) = .init;
 pub fn main() !void {
@@ -16,43 +11,31 @@ pub fn main() !void {
             .ReleaseFast, .ReleaseSmall => .{ std.heap.smp_allocator, false },
         };
     };
-    _ = gpa;
     defer if (is_debug) {
         _ = debug_allocator.deinit();
     };
-    // Prints to stderr (it's a shortcut based on `std.io.getStdErr()`)
-    std.debug.print("All your {s} are belong to us.\n", .{"codebase"});
 
-    // stdout is for the actual output of your application, for example if you
-    // are implementing gzip, then only the compressed bytes should be sent to
-    // stdout, not any debugging messages.
-    const stdout_file = std.io.getStdOut().writer();
-    var bw = std.io.bufferedWriter(stdout_file);
-    const stdout = bw.writer();
+    var arena: std.heap.ArenaAllocator = .init(gpa);
+    defer arena.deinit();
+    const arena_alloc = arena.allocator();
 
-    try stdout.print("Run `zig build test` to run the tests.\n", .{});
+    const args = std.process.argsAlloc(arena_alloc) catch unreachable;
+    defer std.process.argsFree(arena_alloc, args);
 
-    try bw.flush(); // Don't forget to flush!
-}
+    if (vips.init(args[0]) != 0) {
+        vips.errorExit("Unable to start VIPS", "something went wrong");
+    }
 
-test "simple test" {
-    var list = std.ArrayList(i32).init(std.testing.allocator);
-    defer list.deinit(); // Try commenting this out and see if zig detects the memory leak!
-    try list.append(42);
-    try std.testing.expectEqual(@as(i32, 42), list.pop());
-}
+    if (args.len != 2) {
+        vips.errorExit("usage: {s} <filename>", vips.getPrgname());
+    }
 
-test "use other module" {
-    try std.testing.expectEqual(@as(i32, 150), lib.add(100, 50));
-}
-
-test "fuzz example" {
-    const Context = struct {
-        fn testOne(context: @This(), input: []const u8) anyerror!void {
-            _ = context;
-            // Try passing `--fuzz` to `zig build test` and see if it manages to fail this test case!
-            try std.testing.expect(!std.mem.eql(u8, "canyoufindme", input));
-        }
-    };
-    try std.testing.fuzz(Context{}, Context.testOne, .{});
+    //TODO: Image is nullable
+    const image = vips.Image.newFromFile(args[1], null);
+    var avg: c_longdouble = undefined;
+    if (vips.Image.avg(image, &avg, null)) {
+        vips.errorExit("unable to find avg");
+    }
+    vips.Object.unref(&image.f_parent_instance);
+    std.debug.print("Hello World!\nPixel average of {s} is {}\n", .{ args[1], avg });
 }

@@ -20,68 +20,37 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
         .@"gir-files-path" = @as([]const u8, "/usr/share/gir-1.0/"),
         .modules = @as([]const []const u8, &.{
-            // "GLib-2.0",
-            // "GObject-2.0",
-            // "Gio-2.0",
             "Vips-8.0",
         }),
     });
 
-    // const translate_gir = gobject.artifact("translate-gir");
-    // const codegen = b.addRunArtifact(translate_gir);
-    // const output = codegen.addPrefixedOutputDirectoryArg("--output-dir=", "bindings");
-    // codegen.addPrefixedDirectoryArg("--gir-fixes-dir=", gobject.path("gir-fixes"));
-    // codegen.addPrefixedDirectoryArg("--gir-dir=", std.Build.LazyPath{ .cwd_relative = "/usr/share/gir-1.0/" });
-    // codegen.addPrefixedDirectoryArg("--gir-dir=", b.path("gir/"));
-    // codegen.addPrefixedDirectoryArg("--bindings-dir=", gobject.path("binding-overrides"));
-    // codegen.addPrefixedDirectoryArg("--extensions-dir=", gobject.path("extensions"));
-    // codegen.addArgs(&.{"Vips-8.0"});
-    // // This is needed to tell Zig that the command run can be cached despite
-    // // having output files.
-    // codegen.expectExitCode(0);
+    const translate_gir = gobject.artifact("translate-gir");
+    const run_translate_gir = b.addRunArtifact(translate_gir);
+    const output = run_translate_gir.addPrefixedOutputDirectoryArg("--output-dir=", "bindings");
+    run_translate_gir.addPrefixedDirectoryArg("--gir-dir=", std.Build.LazyPath{ .cwd_relative = "/usr/share/gir-1.0/" });
+    run_translate_gir.addPrefixedDirectoryArg("--gir-dir=", b.path("gir/"));
+    run_translate_gir.addPrefixedDirectoryArg("--gir-fixes-dir=", gobject.path("gir-fixes"));
+    run_translate_gir.addPrefixedDirectoryArg("--bindings-dir=", gobject.path("binding-overrides"));
+    // run_translate_gir.addPrefixedDirectoryArg("--bindings-dir=", b.path("binding-overrides"));
+    run_translate_gir.addPrefixedDirectoryArg("--extensions-dir=", gobject.path("extensions"));
+    run_translate_gir.addPrefixedDirectoryArg("--abi-test-output-dir=", gobject.path("test/abi"));
+    run_translate_gir.addArgs(&.{"Vips-8.0"});
+    // This is needed to tell Zig that the command run can be cached despite
+    // having output files.
+    run_translate_gir.expectExitCode(0);
 
-    const dep_codegen = gobject.builder.top_level_steps.get("codegen").?;
-    const my_codegen = b.step("codegen", "Do codegent");
-
-    const codegenInstallDirectoryLazyPath = struct {
-        pub fn dependencyLazyPath(top_level_step: *std.Build.Step, sub_dir: []const u8) *std.Build.LazyPath {
-            var found: ?*std.Build.LazyPath = null;
-            for (top_level_step.dependencies.items) |dep_step| {
-                const inst = dep_step.cast(std.Build.Step.InstallDir) orelse continue;
-                if (std.mem.eql(u8, inst.options.install_subdir, sub_dir)) {
-                    if (found != null) std.debug.panic("sub_dir name '{s}' is ambiguous", .{sub_dir});
-                    found = &inst.options.source_dir;
-                }
-            }
-            return found orelse {
-                for (top_level_step.dependencies.items) |dep_step| {
-                    const inst = dep_step.cast(std.Build.Step.InstallDir) orelse continue;
-                    std.log.info("available LazyPath: '{any}'", .{inst.options.source_dir});
-                }
-                std.debug.panic("unable to find artifact '{any}'", .{sub_dir});
-            };
-        }
-    }.dependencyLazyPath;
-
-    const generated_binding_path = codegenInstallDirectoryLazyPath(&dep_codegen.step, "bindings");
+    const codegen = b.step("codegen", "Do codegent");
     const install_bindings = b.addInstallDirectory(.{
-        .install_dir = .{ .custom = "" },
-        .install_subdir = "../bindings",
-        .source_dir = generated_binding_path.*,
+        .install_dir = .{ .custom = "../" },
+        .install_subdir = "bindings",
+        .source_dir = output,
     });
+    codegen.dependOn(&install_bindings.step);
 
-    my_codegen.dependOn(&install_bindings.step);
-
-    // b.installDirectory(.{
-    //     .source_dir = output,
-    //     .install_dir = .prefix,
-    //     .install_subdir = "bindings",
-    // });
-
-    // const vips = b.dependency("libvips", .{
-    //     .target = target,
-    //     .optimize = optimize,
-    // });
+    const vips = b.dependency("libvips", .{
+        .target = target,
+        .optimize = optimize,
+    });
 
     const exe_mod = b.createModule(.{
         .root_source_file = b.path("src/main.zig"),
@@ -90,7 +59,7 @@ pub fn build(b: *std.Build) void {
         .link_libc = true,
         .strip = strip,
     });
-    // exe_mod.addImport("vips", vips.module("vips8"));
+    exe_mod.addImport("vips", vips.module("vips8"));
 
     const exe = b.addExecutable(.{
         .name = "libvips",
@@ -99,6 +68,7 @@ pub fn build(b: *std.Build) void {
         .use_llvm = false,
     });
     exe.want_lto = lto;
+    // exe.linkSystemLibrary("vips");
 
     const exe_check = b.addExecutable(.{
         .name = "check",
