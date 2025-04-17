@@ -1,6 +1,7 @@
 const std = @import("std");
 const builtin = @import("builtin");
 const vips = @import("vips");
+const c_null = @import("c_type.zig").c_null;
 
 var debug_allocator: std.heap.DebugAllocator(.{}) = .init;
 pub fn main() !void {
@@ -30,16 +31,15 @@ pub fn main() !void {
         vips.errorExit("usage: {s} <filename>", vips.getPrgname());
     }
 
-    //TODO: Image is nullable
-    const image = vips.Image.newFromFile(args[1]) orelse {
-        std.debug.print("args is {s}\n", .{args[1]});
+    const image = vips.Image.newFromFile(args[1], c_null) orelse {
         vips.errorExit("unable to open file");
         unreachable;
     };
+    defer image.unref();
+
     var avg: f64 = undefined;
-    if (image.avg(&avg) != 0) {
+    if (image.avg(&avg, c_null) != 0) {
         vips.errorExit("unable to find avg");
     }
-    vips.Object.unref(&image.f_parent_instance);
-    std.debug.print("Hello World!\nPixel average of {s} is {}\n", .{ args[1], avg });
+    std.debug.print("\nHello World!\nPixel average of {s} is {}\n", .{ args[1], avg });
 }
