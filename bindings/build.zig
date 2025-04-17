@@ -233,7 +233,7 @@ pub fn build(b: *std.Build) void {
 
 pub const libraries = struct {
     pub const vips8: Library = .{
-        .system_libraries = &.{},
+        .system_libraries = &.{"vips"},
     };
 
     pub const gobject2: Library = .{

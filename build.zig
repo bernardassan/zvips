@@ -18,10 +18,11 @@ pub fn build(b: *std.Build) void {
     const gobject = b.dependency("gobject", .{
         .target = target,
         .optimize = optimize,
-        .@"gir-files-path" = @as([]const u8, "/usr/share/gir-1.0/"),
-        .modules = @as([]const []const u8, &.{
-            "Vips-8.0",
-        }),
+    });
+
+    const vips = b.dependency("libvips", .{
+        .target = target,
+        .optimize = optimize,
     });
 
     const translate_gir = gobject.artifact("translate-gir");
@@ -30,27 +31,22 @@ pub fn build(b: *std.Build) void {
     run_translate_gir.addPrefixedDirectoryArg("--gir-dir=", std.Build.LazyPath{ .cwd_relative = "/usr/share/gir-1.0/" });
     run_translate_gir.addPrefixedDirectoryArg("--gir-dir=", b.path("gir/"));
     run_translate_gir.addPrefixedDirectoryArg("--gir-fixes-dir=", gobject.path("gir-fixes"));
+    run_translate_gir.addPrefixedDirectoryArg("--gir-fixes-dir=", b.path("gir-fixes"));
     run_translate_gir.addPrefixedDirectoryArg("--bindings-dir=", gobject.path("binding-overrides"));
     // run_translate_gir.addPrefixedDirectoryArg("--bindings-dir=", b.path("binding-overrides"));
     run_translate_gir.addPrefixedDirectoryArg("--extensions-dir=", gobject.path("extensions"));
-    run_translate_gir.addPrefixedDirectoryArg("--abi-test-output-dir=", gobject.path("test/abi"));
     run_translate_gir.addArgs(&.{"Vips-8.0"});
     // This is needed to tell Zig that the command run can be cached despite
     // having output files.
     run_translate_gir.expectExitCode(0);
 
-    const codegen = b.step("codegen", "Do codegent");
+    const codegen = b.step("codegen", "Do codegen");
     const install_bindings = b.addInstallDirectory(.{
         .install_dir = .{ .custom = "../" },
         .install_subdir = "bindings",
         .source_dir = output,
     });
     codegen.dependOn(&install_bindings.step);
-
-    const vips = b.dependency("libvips", .{
-        .target = target,
-        .optimize = optimize,
-    });
 
     const exe_mod = b.createModule(.{
         .root_source_file = b.path("src/main.zig"),
@@ -68,7 +64,6 @@ pub fn build(b: *std.Build) void {
         .use_llvm = false,
     });
     exe.want_lto = lto;
-    // exe.linkSystemLibrary("vips");
 
     const exe_check = b.addExecutable(.{
         .name = "check",

@@ -765,7 +765,7 @@ pub const Image = extern struct {
     ///
     /// See also: `vips.Foreign.findLoad`, `vips.Foreign.isA`,
     /// `vips.Image.writeToFile`.
-    extern fn vips_image_new_from_file(p_name: [*:0]const u8, ...) *vips.Image;
+    extern fn vips_image_new_from_file(p_name: [*:0]const u8, ...) ?*vips.Image;
     pub const newFromFile = vips_image_new_from_file;
 
     /// Opens the named file for simultaneous reading and writing. This will only
@@ -6452,7 +6452,7 @@ pub const Region = extern struct {
     f_im: ?*vips.Image,
     /// the `vips.Rect` of pixels that this region represents
     f_valid: vips.Rect,
-    f_type: @compileError("not enough type information available"),
+    f_type: ?*anyopaque,
     f_data: ?*vips.Pel,
     f_bpl: c_int,
     f_seq: ?*anyopaque,

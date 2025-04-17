@@ -31,9 +31,13 @@ pub fn main() !void {
     }
 
     //TODO: Image is nullable
-    const image = vips.Image.newFromFile(args[1], null);
-    var avg: c_longdouble = undefined;
-    if (vips.Image.avg(image, &avg, null)) {
+    const image = vips.Image.newFromFile(args[1]) orelse {
+        std.debug.print("args is {s}\n", .{args[1]});
+        vips.errorExit("unable to open file");
+        unreachable;
+    };
+    var avg: f64 = undefined;
+    if (image.avg(&avg) != 0) {
         vips.errorExit("unable to find avg");
     }
     vips.Object.unref(&image.f_parent_instance);
