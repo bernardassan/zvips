@@ -1,7 +1,8 @@
 const std = @import("std");
 const builtin = @import("builtin");
 const vips = @import("vips");
-const c_null = @import("c_type.zig").c_null;
+const c_null = @import("c.zig").c_null;
+const log = @import("log.zig");
 
 var debug_allocator: std.heap.DebugAllocator(.{}) = .init;
 pub fn main() !void {
@@ -23,6 +24,8 @@ pub fn main() !void {
     const args = std.process.argsAlloc(arena_alloc) catch unreachable;
     defer std.process.argsFree(arena_alloc, args);
 
+    log.defaultLogger();
+
     if (vips.init(args[0]) != 0) {
         vips.errorExit("Unable to start VIPS", "something went wrong");
     }
@@ -41,5 +44,5 @@ pub fn main() !void {
     if (image.avg(&avg, c_null) != 0) {
         vips.errorExit("unable to find avg");
     }
-    std.debug.print("\nHello World!\nPixel average of {s} is {}\n", .{ args[1], avg });
+    std.debug.print("Hello World!\nPixel average of {s} is {}\n", .{ args[1], avg });
 }

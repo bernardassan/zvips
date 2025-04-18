@@ -56,6 +56,7 @@ pub fn build(b: *std.Build) void {
         .strip = strip,
     });
     exe_mod.addImport("vips", vips.module("vips8"));
+    exe_mod.addImport("glib", vips.module("glib2"));
 
     const exe = b.addExecutable(.{
         .name = "libvips",
