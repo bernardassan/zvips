@@ -54,6 +54,9 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
         .link_libc = true,
         .strip = strip,
+        .sanitize_c = true,
+        .stack_check = true,
+        .pic = true,
     });
     exe_mod.addImport("vips", vips.module("vips8"));
     exe_mod.addImport("glib", vips.module("glib2"));

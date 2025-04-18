@@ -44,5 +44,5 @@ pub fn main() !void {
     if (image.avg(&avg, c_null) != 0) {
         vips.errorExit("unable to find avg");
     }
-    std.debug.print("Hello World!\nPixel average of {s} is {}\n", .{ args[1], avg });
+    std.debug.print("Pixel average of {s} is {}\n", .{ args[1], avg });
 }
