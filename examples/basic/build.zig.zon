@@ -5,8 +5,9 @@
     .minimum_zig_version = "0.15.0-dev.375+8f8f37fb0",
     .dependencies = .{
         .zivips = .{
-            .url = "https://github.com/Ultra-Code/zivips/archive/1322a6298791a5239b4f38524df272731caca3a5.tar.gz",
-            .hash = "zivips-0.1.0-HUpkMIUjIQC6SX2Ug9nS3rD17wthKMYYeKdoAP5rmnz0",
+            // .url = "https://github.com/Ultra-Code/zivips/archive/1322a6298791a5239b4f38524df272731caca3a5.tar.gz",
+            // .hash = "zivips-0.1.0-HUpkMIUjIQC6SX2Ug9nS3rD17wthKMYYeKdoAP5rmnz0",
+            .path = "../..",
         },
     },
     .paths = .{

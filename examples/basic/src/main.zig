@@ -1,7 +1,7 @@
 const std = @import("std");
 const builtin = @import("builtin");
-const log = @import("log.zig");
 const zivips = @import("zivips");
+const log = zivips.log;
 const vips = zivips.vips;
 const c_null = zivips.c_null;
 
