@@ -22,11 +22,13 @@
     </xsl:element>
   </xsl:template>
 
-  <!-- Change Region field type to an opaque pointer since its type is private
-       and not available in gir -->
+  <!-- Replace type of `RegionType` field with a c_int since it is a private
+       enum in libvips https://github.com/libvips/libvips/blob/d003027b5a1e6a32cbb55560c751cbc05ddc9b57/libvips/include/vips/private.h#L144-L152
+       and C enums are ints at the abi level -->
   <xsl:template match="core:class[@name='Region']/core:field[@name='type']/core:type">
     <xsl:copy>
-      <xsl:attribute name="c:type">RegionType*</xsl:attribute>
+      <xsl:attribute name="name">gint</xsl:attribute>
+      <xsl:attribute name="c:type">gint</xsl:attribute>
     </xsl:copy>
   </xsl:template>
 

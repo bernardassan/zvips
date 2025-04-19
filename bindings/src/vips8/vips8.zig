@@ -6452,7 +6452,7 @@ pub const Region = extern struct {
     f_im: ?*vips.Image,
     /// the `vips.Rect` of pixels that this region represents
     f_valid: vips.Rect,
-    f_type: ?*anyopaque,
+    f_type: c_int,
     f_data: ?*vips.Pel,
     f_bpl: c_int,
     f_seq: ?*anyopaque,
