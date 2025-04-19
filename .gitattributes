@@ -1,0 +1,3 @@
+# Omit from release/archive tarball
+examples/ export-ignore
+.* export-ignore

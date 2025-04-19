@@ -50,7 +50,7 @@ pub fn build(b: *std.Build) void {
     });
     codegen.dependOn(&install_bindings.step);
 
-    const lib_mod = b.addModule("zivips", .{
+    const mod = b.addModule("zivips", .{
         .root_source_file = b.path("lib/root.zig"),
         .target = target,
         .optimize = optimize,
@@ -59,20 +59,20 @@ pub fn build(b: *std.Build) void {
         .stack_check = true,
         .strip = strip,
     });
-    lib_mod.addImport("vips", vips.module("vips8"));
-    lib_mod.addImport("glib", vips.module("glib2"));
+    mod.addImport("vips", vips.module("vips8"));
+    mod.addImport("glib", vips.module("glib2"));
 
-    const libzivips = b.addLibrary(.{
+    const zivips = b.addLibrary(.{
         .name = "zivips",
         .linkage = linkage,
-        .root_module = lib_mod,
+        .root_module = mod,
         .use_lld = lld,
         .use_llvm = llvm,
     });
-    libzivips.pie = llvm;
-    libzivips.want_lto = lto;
+    zivips.pie = llvm;
+    zivips.want_lto = lto;
 
-    b.installArtifact(libzivips);
+    b.installArtifact(zivips);
 }
 
 // ensures the currently in-use zig version is at least the minimum required
