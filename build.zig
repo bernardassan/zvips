@@ -48,6 +48,7 @@ pub fn build(b: *std.Build) void {
     });
     mod.addImport("vips", vips.module("vips8"));
     mod.addImport("glib", vips.module("glib2"));
+    mod.addImport("gobject", vips.module("gobject2"));
 
     const zivips = b.addLibrary(.{
         .name = "zivips",

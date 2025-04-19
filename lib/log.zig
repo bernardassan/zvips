@@ -1,5 +1,5 @@
 const std = @import("std");
-const zivips = @import("zivips");
+const zivips = @import("root.zig");
 const vips = zivips.vips;
 const glib = zivips.glib;
 const c_null = zivips.c_null;
