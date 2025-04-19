@@ -27,20 +27,7 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    const translate_gir = gobject.artifact("translate-gir");
-    const run_translate_gir = b.addRunArtifact(translate_gir);
-    const output = run_translate_gir.addPrefixedOutputDirectoryArg("--output-dir=", "bindings");
-    run_translate_gir.addPrefixedDirectoryArg("--gir-dir=", std.Build.LazyPath{ .cwd_relative = "/usr/share/gir-1.0/" });
-    run_translate_gir.addPrefixedDirectoryArg("--gir-dir=", b.path("gir/"));
-    run_translate_gir.addPrefixedDirectoryArg("--gir-fixes-dir=", gobject.path("gir-fixes"));
-    run_translate_gir.addPrefixedDirectoryArg("--gir-fixes-dir=", b.path("gir-fixes"));
-    run_translate_gir.addPrefixedDirectoryArg("--bindings-dir=", gobject.path("binding-overrides"));
-    // run_translate_gir.addPrefixedDirectoryArg("--bindings-dir=", b.path("binding-overrides"));
-    run_translate_gir.addPrefixedDirectoryArg("--extensions-dir=", gobject.path("extensions"));
-    run_translate_gir.addArgs(&.{"Vips-8.0"});
-    // This is needed to tell Zig that the command run can be cached despite
-    // having output files.
-    run_translate_gir.expectExitCode(0);
+    const output = codeGen(b, gobject);
 
     const codegen = b.step("codegen", "Do codegen");
     const install_bindings = b.addInstallDirectory(.{
@@ -73,6 +60,26 @@ pub fn build(b: *std.Build) void {
     zivips.want_lto = lto;
 
     b.installArtifact(zivips);
+}
+
+fn codeGen(b: *std.Build, gobject: *std.Build.Dependency) std.Build.LazyPath {
+    const translate_gir = gobject.artifact("translate-gir");
+
+    const run_translate_gir = b.addRunArtifact(translate_gir);
+
+    const output = run_translate_gir.addPrefixedOutputDirectoryArg("--output-dir=", "bindings");
+    run_translate_gir.addPrefixedDirectoryArg("--gir-dir=", std.Build.LazyPath{ .cwd_relative = "/usr/share/gir-1.0/" });
+    run_translate_gir.addPrefixedDirectoryArg("--gir-dir=", b.path("gir/"));
+    run_translate_gir.addPrefixedDirectoryArg("--gir-fixes-dir=", gobject.path("gir-fixes"));
+    run_translate_gir.addPrefixedDirectoryArg("--gir-fixes-dir=", b.path("gir-fixes"));
+    run_translate_gir.addPrefixedDirectoryArg("--bindings-dir=", gobject.path("binding-overrides"));
+    run_translate_gir.addPrefixedDirectoryArg("--extensions-dir=", gobject.path("extensions"));
+    run_translate_gir.addArgs(&.{"Vips-8.0"});
+    // This is needed to tell Zig that the command run can be cached despite
+    // having output files.
+    run_translate_gir.expectExitCode(0);
+
+    return output;
 }
 
 // ensures the currently in-use zig version is at least the minimum required
