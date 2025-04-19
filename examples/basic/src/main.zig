@@ -1,8 +1,9 @@
 const std = @import("std");
 const builtin = @import("builtin");
-const vips = @import("vips");
-const c_null = @import("c.zig").c_null;
 const log = @import("log.zig");
+const zivips = @import("zivips");
+const vips = zivips.vips;
+const c_null = zivips.c_null;
 
 var debug_allocator: std.heap.DebugAllocator(.{}) = .init;
 pub fn main() !void {
