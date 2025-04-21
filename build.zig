@@ -1,16 +1,17 @@
 const std = @import("std");
+const Build = std.Build;
 const builtin = @import("builtin");
-
 const build_zon = @import("build.zig.zon");
 
 comptime {
     checkVersion();
 }
 
-pub fn build(b: *std.Build) void {
+pub fn build(b: *Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
+    const no_bin = b.option(bool, "no-bin", "skip emitting binary for incremental compilation checks") orelse false;
     const strip = b.option(bool, "strip", "Strip debug information") orelse false;
     const lto = b.option(bool, "lto", "Enable link time optimization") orelse false;
     const llvm = b.option(bool, "llvm", "Use the llvm codegen backend") orelse false;
@@ -56,20 +57,26 @@ pub fn build(b: *std.Build) void {
         .root_module = mod,
         .use_lld = lld,
         .use_llvm = llvm,
+        .max_rss = std.fmt.parseIntSizeSuffix("40MiB", 10) catch unreachable,
     });
     zivips.pie = llvm;
     zivips.want_lto = lto;
 
-    b.installArtifact(zivips);
+    if (no_bin) {
+        const vips_path = zivips.getEmittedBin();
+        b.addNamedLazyPath("zivips", vips_path);
+    } else {
+        b.installArtifact(zivips);
+    }
 }
 
-fn codeGen(b: *std.Build, gobject: *std.Build.Dependency) std.Build.LazyPath {
+fn codeGen(b: *Build, gobject: *Build.Dependency) Build.LazyPath {
     const translate_gir = gobject.artifact("translate-gir");
 
     const run_translate_gir = b.addRunArtifact(translate_gir);
 
     const output = run_translate_gir.addPrefixedOutputDirectoryArg("--output-dir=", "bindings");
-    run_translate_gir.addPrefixedDirectoryArg("--gir-dir=", std.Build.LazyPath{ .cwd_relative = "/usr/share/gir-1.0/" });
+    run_translate_gir.addPrefixedDirectoryArg("--gir-dir=", Build.LazyPath{ .cwd_relative = "/usr/share/gir-1.0/" });
     run_translate_gir.addPrefixedDirectoryArg("--gir-dir=", b.path("gir/"));
     run_translate_gir.addPrefixedDirectoryArg("--gir-fixes-dir=", gobject.path("gir-fixes"));
     run_translate_gir.addPrefixedDirectoryArg("--gir-fixes-dir=", b.path("gir-fixes"));

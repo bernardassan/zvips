@@ -1,14 +1,24 @@
 const std = @import("std");
-pub fn build(b: *std.Build) void {
+const Build = std.Build;
+
+const Lib = union(enum) {
+    compile: *Build.Step.Compile,
+    lazy: Build.LazyPath,
+};
+
+pub fn build(b: *Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const no_bin = b.option(bool, "no-bin", "skip emitting binary for incremental compilation checks") orelse false;
+    const no_bin = b.option(bool, "no-bin", "skip emitting binary for incremental compilation checks") orelse switch (optimize) {
+        .Debug => true,
+        else => false,
+    };
 
     const llvm = false;
     const lld = false;
     const strip = false;
-    const lto = false;
+    const lto = lld;
 
     const zivips = b.dependency("zivips", .{
         .target = target,
@@ -18,9 +28,16 @@ pub fn build(b: *std.Build) void {
         .strip = strip,
         .llvm = llvm,
         .lld = lld,
+        .@"no-bin" = no_bin,
     });
 
-    const libzivips = zivips.artifact("zivips");
+    const libzivips: Lib = lib: {
+        if (no_bin) {
+            break :lib .{ .lazy = zivips.namedLazyPath("zivips") };
+        } else {
+            break :lib .{ .compile = zivips.artifact("zivips") };
+        }
+    };
 
     const exe_mod = b.createModule(.{
         .root_source_file = b.path("src/main.zig"),
@@ -28,6 +45,14 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
         .strip = strip,
     });
+    switch (libzivips) {
+        .lazy => |lazy| {
+            exe_mod.addObjectFile(lazy);
+        },
+        .compile => |compile| {
+            exe_mod.linkLibrary(compile);
+        },
+    }
     exe_mod.addImport("zivips", zivips.module("zivips"));
 
     const exe = b.addExecutable(.{
@@ -38,15 +63,13 @@ pub fn build(b: *std.Build) void {
     });
     exe.want_lto = lto;
     exe.pie = llvm;
-    exe.linkLibrary(libzivips);
 
     const exe_check = b.addExecutable(.{
-        .name = "check",
+        .name = "basic",
         .root_module = exe_mod,
         .use_llvm = llvm,
         .use_lld = lld,
     });
-    exe_check.linkLibrary(libzivips);
 
     const check = b.step("check", "Check if foo compiles");
     check.dependOn(&exe_check.step);
@@ -57,7 +80,6 @@ pub fn build(b: *std.Build) void {
         b.getInstallStep().dependOn(&exe.step);
     } else {
         b.installArtifact(exe);
-        b.installArtifact(libzivips);
     }
 
     const run_cmd = b.addRunArtifact(exe);
