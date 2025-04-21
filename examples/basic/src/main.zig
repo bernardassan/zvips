@@ -5,8 +5,8 @@ const log = zivips.log;
 const vips = zivips.vips;
 const c_null = zivips.c_null;
 
-var debug_allocator: std.heap.DebugAllocator(.{}) = .init;
 pub fn main() !void {
+    var debug_allocator: std.heap.DebugAllocator(.{}) = .init;
     const gpa, const is_debug = gpa: {
         if (builtin.os.tag == .wasi) break :gpa .{ std.heap.wasm_allocator, false };
         break :gpa switch (builtin.mode) {
@@ -31,11 +31,15 @@ pub fn main() !void {
         vips.errorExit("Unable to start VIPS", "something went wrong");
     }
 
+    // This will print a table of any ref leaks on exit,
+    // very handy for development.
+    vips.leakSet(@intFromBool(true));
+
     if (args.len != 2) {
         vips.errorExit("usage: {s} <filename>", vips.getPrgname());
     }
 
-    const image = vips.Image.newFromFile(args[1], c_null) orelse {
+    const image = vips.Image.newFromFile(std.mem.sliceTo(args[1], 0)) orelse {
         vips.errorExit("unable to open file");
         unreachable;
     };
