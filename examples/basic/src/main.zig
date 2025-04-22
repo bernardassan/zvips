@@ -2,8 +2,9 @@ const std = @import("std");
 const builtin = @import("builtin");
 const zivips = @import("zivips");
 const log = zivips.log;
-const vips = zivips.vips;
-const c_null = zivips.c_null;
+const zvips = zivips.zvips;
+const vips = zivips.c.vips;
+const c_null = zivips.c.c_null;
 
 pub fn main() !void {
     var debug_allocator: std.heap.DebugAllocator(.{}) = .init;
@@ -39,6 +40,11 @@ pub fn main() !void {
         vips.errorExit("usage: {s} <filename>", vips.getPrgname());
     }
 
+    // const image = @call(.auto, vips.Image.newFromFile, .{ args[1], @as(?*anyopaque, null) }) orelse {
+    //     vips.errorExit("unable to open file");
+    //     unreachable;
+    // };
+    var a = zvips.newFromFile(args[1]);
     const image = vips.Image.newFromFile(std.mem.sliceTo(args[1], 0)) orelse {
         vips.errorExit("unable to open file");
         unreachable;
@@ -49,5 +55,7 @@ pub fn main() !void {
     if (image.avg(&avg, c_null) != 0) {
         vips.errorExit("unable to find avg");
     }
+
+    std.debug.assert(a.Image.avg() == avg);
     std.debug.print("Pixel average of {s} is {}\n", .{ args[1], avg });
 }
