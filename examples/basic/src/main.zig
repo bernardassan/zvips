@@ -45,7 +45,7 @@ pub fn main() !void {
     //     unreachable;
     // };
     var a = zvips.newFromFile(args[1]);
-    const image = vips.Image.newFromFile(std.mem.sliceTo(args[1], 0)) orelse {
+    const image = vips.Image.newFromFile(args[1], null) orelse {
         vips.errorExit("unable to open file");
         unreachable;
     };

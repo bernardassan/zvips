@@ -25,7 +25,11 @@ pub fn Zimage(comptime T: type) type {
 
 pub const zvips = struct {
     pub fn newFromFile(name: [:0]const u8) zvips {
-        const image = c.vips.Image.newFromFile(name, c.c_null) orelse unreachable;
+        const image = c.vips.Image.newFromFile(name, null) orelse {
+            c.vips.errorExit("unable to open file");
+            unreachable;
+        };
+
         return .{ ._cImage = image };
     }
 

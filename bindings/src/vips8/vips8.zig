@@ -766,7 +766,9 @@ pub const Image = extern struct {
     /// See also: `vips.Foreign.findLoad`, `vips.Foreign.isA`,
     /// `vips.Image.writeToFile`.
     extern fn vips_image_new_from_file(p_name: [*:0]const u8, ...) ?*vips.Image;
-    pub const newFromFile = vips_image_new_from_file;
+    pub fn newFromFile(p_name: [*:0]const u8, comptime p_args: ?[]const [*:0]const u8) ?*vips.Image {
+        return ext.callVarArgs(vips_image_new_from_file, @TypeOf(p_name), p_name, p_args);
+    }
 
     /// Opens the named file for simultaneous reading and writing. This will only
     /// work for VIPS files in a format native to your machine. It is only for

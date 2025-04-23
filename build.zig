@@ -57,7 +57,7 @@ pub fn build(b: *Build) void {
         .root_module = mod,
         .use_lld = lld,
         .use_llvm = llvm,
-        .max_rss = std.fmt.parseIntSizeSuffix("40MiB", 10) catch unreachable,
+        .max_rss = std.fmt.parseIntSizeSuffix("50MiB", 10) catch unreachable,
     });
     zivips.pie = llvm;
     zivips.want_lto = lto;
@@ -82,6 +82,7 @@ fn codeGen(b: *Build, gobject: *Build.Dependency) Build.LazyPath {
     run_translate_gir.addPrefixedDirectoryArg("--gir-fixes-dir=", b.path("gir-fixes"));
     run_translate_gir.addPrefixedDirectoryArg("--bindings-dir=", gobject.path("binding-overrides"));
     run_translate_gir.addPrefixedDirectoryArg("--extensions-dir=", gobject.path("extensions"));
+    run_translate_gir.addPrefixedDirectoryArg("--extensions-dir=", b.path("extensions"));
     run_translate_gir.addArgs(&.{"Vips-8.0"});
     // This is needed to tell Zig that the command run can be cached despite
     // having output files.
