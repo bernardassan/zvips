@@ -44,18 +44,23 @@ pub fn main() !void {
     //     vips.errorExit("unable to open file");
     //     unreachable;
     // };
-    var a = zvips.newFromFile(args[1]);
-    const image = vips.Image.newFromFile(args[1], null) orelse {
+    var a = vips.ext.newFromFile(args[1], .{ .heif = .{ .@"fail-on" = .warning } }) orelse {
         vips.errorExit("unable to open file");
         unreachable;
     };
-    defer image.unref();
 
-    var avg: f64 = undefined;
-    if (image.avg(&avg, c_null) != 0) {
-        vips.errorExit("unable to find avg");
-    }
+    // const image = vips.Image.newFromFile(args[1], &.{ "fail-on", "warning" }) orelse {
+    //     vips.errorExit("unable to open file");
+    //     unreachable;
+    // };
+    // defer image.unref();
 
-    std.debug.assert(a.Image.avg() == avg);
-    std.debug.print("Pixel average of {s} is {}\n", .{ args[1], avg });
+    // var avg: f64 = undefined;
+    // if (image.avg(&avg, c_null) != 0) {
+    //     vips.errorExit("unable to find avg");
+    // }
+    var avg1: f64 = undefined;
+    _ = a.avg(&avg1, c_null);
+    // std.debug.assert(avg1 == avg);
+    std.debug.print("Pixel average of {s} is {}\n", .{ args[1], avg1 });
 }

@@ -1,23 +1,114 @@
 const std = @import("std");
+const vips = @import("vips8");
+const fmt = std.fmt;
 
-fn callVarArgs(func: anytype, comptime T: type, start: T, comptime valist: ?[]const T) @typeInfo(@TypeOf(func)).@"fn".return_type.? {
-    if (valist) |args| {
-        std.debug.assert(@typeInfo(@TypeOf(args)).pointer.size == .slice);
-    }
+fn callVaA(func: anytype, start: anytype, valist: anytype) @typeInfo(@TypeOf(func)).@"fn".return_type.? {
+    std.debug.assert(@typeInfo(@TypeOf(valist)).@"struct".is_tuple == true);
     const c_null: ?*anyopaque = null;
-    if (valist) |args| {
-        switch (args.len) {
-            1 => return func(start, args[0], c_null),
-            2 => return func(start, args[0], args[1], c_null),
-            3 => return func(start, args[0], args[1], args[2], c_null),
-            4 => return func(start, args[0], args[1], args[2], args[3], c_null),
-            5 => return func(start, args[0], args[1], args[2], args[3], args[4], c_null),
-            6 => return func(start, args[0], args[1], args[2], args[3], args[4], args[5], c_null),
-            7 => return func(start, args[0], args[1], args[2], args[3], args[5], args[5], args[6], c_null),
-            8 => return func(start, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], c_null),
-            else => @compileError("unsupported number of arguments"),
+    return @call(.auto, func, .{start} ++ valist ++ .{c_null});
+}
+
+const Heif = struct {
+    /// First page to load, input gint
+    /// default: 0
+    /// min: 0, max: 100000
+    page: ?u10 = null,
+    /// Number of pages to load, -1 for all, input gint
+    /// default: 1
+    /// min: -1, max: 100000
+    n: ?i11 = null,
+    /// Fetch thumbnail image, input gboolean
+    /// default: false
+    thumbnail: ?bool = null,
+    /// Remove all denial of service limits, input gboolean
+    unlimited: ?bool = null,
+    /// TODO: this can't be passed with the [key=value] format
+    /// as it is an out param
+    /// get Flags for this file, output VipsForeignFlags
+    // flags: ?*vips.ForeignFlags,
+    /// Force open via memory, input gboolean
+    /// default: false
+    memory: ?bool = null,
+    /// Required access pattern for this file, input VipsAccess
+    /// default enum: random
+    access: ?vips.Access = null,
+    /// Error level to fail on, input VipsFailOn
+    /// default enum: none
+    @"fail-on": ?vips.FailOn = null,
+    /// Don't use a cached result for this operation, input gboolean
+    /// default: false
+    revalidate: ?bool = null,
+};
+
+// TODO: add general load and save options and loader specific options
+const ImageOptions = union(enum) {
+    const Load = union(enum) {
+        all: struct {},
+        heif: Heif,
+
+        /// caller owns memory and must free with `allocator.free` when done
+        pub fn toString(self: Load, allocator: std.mem.Allocator) []const u8 {
+            const char_count = 128; //random number bump if limit is hit
+            var options = std.ArrayList(u8).initCapacity(allocator, char_count) catch unreachable;
+            options.appendAssumeCapacity('[');
+
+            var writer = options.writer();
+
+            switch (self) {
+                .heif => |heif_options| {
+                    if (heif_options.page) |page| {
+                        writer.print("page={}", .{page}) catch unreachable;
+                        writer.writeByte(',') catch unreachable;
+                    } else if (heif_options.n) |n| {
+                        writer.print("n={}", .{n}) catch unreachable;
+                        writer.writeByte(',') catch unreachable;
+                    } else if (heif_options.thumbnail) |thumbnail| {
+                        writer.print("thumbnail={}", .{thumbnail}) catch unreachable;
+                        writer.writeByte(',') catch unreachable;
+                    } else if (heif_options.unlimited) |unlimited| {
+                        writer.print("unlimited={}", .{unlimited}) catch unreachable;
+                        writer.writeByte(',') catch unreachable;
+                    } else if (heif_options.memory) |memory| {
+                        writer.print("memory={}", .{memory}) catch unreachable;
+                        writer.writeByte(',') catch unreachable;
+                    } else if (heif_options.access) |access| {
+                        writer.print("access={s}", .{@tagName(access)}) catch unreachable;
+                        writer.writeByte(',') catch unreachable;
+                    } else if (heif_options.@"fail-on") |fail_on| {
+                        writer.print("fail-on={s}", .{@tagName(fail_on)}) catch unreachable;
+                        writer.writeByte(',') catch unreachable;
+                    } else if (heif_options.revalidate) |revalidate| {
+                        writer.print("revalidate={}", .{revalidate}) catch unreachable;
+                        writer.writeByte(',') catch unreachable;
+                    }
+                },
+                .all => {},
+            }
+
+            // replace last ',' with ']'
+            options.replaceRangeAssumeCapacity(options.items.len - 1, 1, "]");
+
+            return options.toOwnedSlice() catch unreachable;
         }
-    } else {
-        return func(start, c_null);
-    }
+    };
+    const Save = union(enum) {};
+};
+
+// TODO: maybe set G_MESSAGES_DEBUG=VIPS in development
+// TODO: how to get the improved API to be the default binding
+// https://github.com/davidbyttow/govips/blob/master/vips/image.go#L126
+// CLEAR_ASSUMPTION: vips might need multiple args before the optional args
+// TODO: use the input.extentions[option=value] parameter setting approach
+pub fn newFromFile(file_name: []const u8, options: ImageOptions.Load) ?*vips.Image {
+    var buf: [256]u8 = undefined;
+    var ba: std.heap.FixedBufferAllocator = .init(&buf);
+    const fba = ba.allocator();
+
+    const option_string = options.toString(fba);
+    defer fba.free(option_string);
+
+    const file_with_options: [:0]const u8 = std.mem.joinZ(fba, "", &.{ file_name, option_string }) catch unreachable;
+
+    //ISSUE: externs are not pub
+    return callVaA(vips.Image.newFromFile, file_with_options, .{});
 }

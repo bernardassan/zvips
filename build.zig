@@ -57,7 +57,7 @@ pub fn build(b: *Build) void {
         .root_module = mod,
         .use_lld = lld,
         .use_llvm = llvm,
-        .max_rss = std.fmt.parseIntSizeSuffix("50MiB", 10) catch unreachable,
+        .max_rss = std.fmt.parseIntSizeSuffix("100MiB", 10) catch unreachable,
     });
     zivips.pie = llvm;
     zivips.want_lto = lto;
