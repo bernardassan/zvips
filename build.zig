@@ -16,7 +16,7 @@ pub fn build(b: *Build) void {
     const lto = b.option(bool, "lto", "Enable link time optimization") orelse false;
     const llvm = b.option(bool, "llvm", "Use the llvm codegen backend") orelse false;
     const lld = b.option(bool, "lld", "Use the llvm's lld linker") orelse false;
-    const linkage = b.option(std.builtin.LinkMode, "linkage", "Choose linkage of zivips") orelse .static;
+    const linkage = b.option(std.builtin.LinkMode, "linkage", "Choose linkage of zvips") orelse .static;
 
     const gobject = b.dependency("gobject", .{
         .target = target,
@@ -38,7 +38,7 @@ pub fn build(b: *Build) void {
     });
     codegen.dependOn(&install_bindings.step);
 
-    const mod = b.addModule("zivips", .{
+    const mod = b.addModule("zvips", .{
         .root_source_file = b.path("lib/root.zig"),
         .target = target,
         .optimize = optimize,
@@ -51,22 +51,22 @@ pub fn build(b: *Build) void {
     mod.addImport("glib", vips.module("glib2"));
     mod.addImport("gobject", vips.module("gobject2"));
 
-    const zivips = b.addLibrary(.{
-        .name = "zivips",
+    const zvips = b.addLibrary(.{
+        .name = "zvips",
         .linkage = linkage,
         .root_module = mod,
         .use_lld = lld,
         .use_llvm = llvm,
         .max_rss = std.fmt.parseIntSizeSuffix("100MiB", 10) catch unreachable,
     });
-    zivips.pie = llvm;
-    zivips.want_lto = lto;
+    zvips.pie = llvm;
+    zvips.want_lto = lto;
 
     if (no_bin) {
-        const vips_path = zivips.getEmittedBin();
-        b.addNamedLazyPath("zivips", vips_path);
+        const vips_path = zvips.getEmittedBin();
+        b.addNamedLazyPath("zvips", vips_path);
     } else {
-        b.installArtifact(zivips);
+        b.installArtifact(zvips);
     }
 }
 
@@ -76,17 +76,13 @@ fn codeGen(b: *Build, gobject: *Build.Dependency) Build.LazyPath {
     const run_translate_gir = b.addRunArtifact(translate_gir);
 
     const output = run_translate_gir.addPrefixedOutputDirectoryArg("--output-dir=", "bindings");
-    run_translate_gir.addPrefixedDirectoryArg("--gir-dir=", Build.LazyPath{ .cwd_relative = "/usr/share/gir-1.0/" });
+    run_translate_gir.addPrefixedDirectoryArg("--gir-dir=", .{ .cwd_relative = "/usr/share/gir-1.0/" });
     run_translate_gir.addPrefixedDirectoryArg("--gir-dir=", b.path("gir/"));
     run_translate_gir.addPrefixedDirectoryArg("--gir-fixes-dir=", gobject.path("gir-fixes"));
     run_translate_gir.addPrefixedDirectoryArg("--gir-fixes-dir=", b.path("gir-fixes"));
     run_translate_gir.addPrefixedDirectoryArg("--bindings-dir=", gobject.path("binding-overrides"));
     run_translate_gir.addPrefixedDirectoryArg("--extensions-dir=", gobject.path("extensions"));
-    run_translate_gir.addPrefixedDirectoryArg("--extensions-dir=", b.path("extensions"));
     run_translate_gir.addArgs(&.{"Vips-8.0"});
-    // This is needed to tell Zig that the command run can be cached despite
-    // having output files.
-    run_translate_gir.expectExitCode(0);
 
     return output;
 }

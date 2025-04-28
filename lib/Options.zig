@@ -1,12 +1,5 @@
 const std = @import("std");
-const vips = @import("vips8");
-const fmt = std.fmt;
-
-fn callVaA(func: anytype, start: anytype, valist: anytype) @typeInfo(@TypeOf(func)).@"fn".return_type.? {
-    std.debug.assert(@typeInfo(@TypeOf(valist)).@"struct".is_tuple == true);
-    const c_null: ?*anyopaque = null;
-    return @call(.auto, func, .{start} ++ valist ++ .{c_null});
-}
+const c = @import("root.zig").c;
 
 const Heif = struct {
     /// First page to load, input gint
@@ -25,24 +18,24 @@ const Heif = struct {
     /// TODO: this can't be passed with the [key=value] format
     /// as it is an out param
     /// get Flags for this file, output VipsForeignFlags
-    // flags: ?*vips.ForeignFlags,
+    flags: ?*c.vips.ForeignFlags = null,
     /// Force open via memory, input gboolean
     /// default: false
     memory: ?bool = null,
     /// Required access pattern for this file, input VipsAccess
     /// default enum: random
-    access: ?vips.Access = null,
+    access: ?c.vips.Access = null,
     /// Error level to fail on, input VipsFailOn
     /// default enum: none
-    @"fail-on": ?vips.FailOn = null,
+    @"fail-on": ?c.vips.FailOn = null,
     /// Don't use a cached result for this operation, input gboolean
     /// default: false
     revalidate: ?bool = null,
 };
 
 // TODO: add general load and save options and loader specific options
-const ImageOptions = union(enum) {
-    const Load = union(enum) {
+pub const Image = struct {
+    pub const Load = union(enum) {
         all: struct {},
         heif: Heif,
 
@@ -91,24 +84,5 @@ const ImageOptions = union(enum) {
             return options.toOwnedSlice() catch unreachable;
         }
     };
-    const Save = union(enum) {};
+    pub const Save = union(enum) {};
 };
-
-// TODO: maybe set G_MESSAGES_DEBUG=VIPS in development
-// TODO: how to get the improved API to be the default binding
-// https://github.com/davidbyttow/govips/blob/master/vips/image.go#L126
-// CLEAR_ASSUMPTION: vips might need multiple args before the optional args
-// TODO: use the input.extentions[option=value] parameter setting approach
-pub fn newFromFile(file_name: []const u8, options: ImageOptions.Load) ?*vips.Image {
-    var buf: [256]u8 = undefined;
-    var ba: std.heap.FixedBufferAllocator = .init(&buf);
-    const fba = ba.allocator();
-
-    const option_string = options.toString(fba);
-    defer fba.free(option_string);
-
-    const file_with_options: [:0]const u8 = std.mem.joinZ(fba, "", &.{ file_name, option_string }) catch unreachable;
-
-    //ISSUE: externs are not pub
-    return callVaA(vips.Image.newFromFile, file_with_options, .{});
-}

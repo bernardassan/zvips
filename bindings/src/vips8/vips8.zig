@@ -9792,7 +9792,7 @@ pub const errorClear = vips_error_clear;
 /// exiting.
 ///
 /// See also: `vips.@"error"`.
-extern fn vips_error_exit(p_fmt: [*:0]const u8, ...) void;
+extern fn vips_error_exit(p_fmt: ?[*:0]const u8, ...) void;
 pub const errorExit = vips_error_exit;
 
 /// Stop errors being logged. Use `vips.errorThaw` to unfreeze. You can

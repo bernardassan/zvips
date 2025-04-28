@@ -1,38 +1,42 @@
 const std = @import("std");
-pub const log = @import("log.zig");
+
 pub const c = struct {
     pub const c_null = @as(?*anyopaque, null);
     pub const glib = @import("glib");
     pub const gobject = @import("gobject");
     pub const vips = @import("vips");
 };
+pub const Image = @import("Image.zig");
 
-/// Mixin to provide methods to manipulate the `_counter` field.
-pub fn Zimage(comptime T: type) type {
-    return struct {
-        const Self = @This();
-        fn getParent(mixin: *Self) *T {
-            return @alignCast(@fieldParentPtr("Image", mixin));
-        }
+const c_null = c.c_null;
+const vips = c.vips;
 
-        pub fn avg(self: *Self) f64 {
-            var out: f64 = undefined;
-            _ = self.getParent()._cImage.avg(&out, c.c_null);
-            return out;
-        }
-    };
+/// See `vips.init` for more details
+pub fn init(app_name: [:0]const u8) error{FailedToStart}!void {
+    if (vips.init(app_name) != 0) return error.FailedToStart;
 }
 
-pub const zvips = struct {
-    pub fn newFromFile(name: [:0]const u8) zvips {
-        const image = c.vips.Image.newFromFile(name, null) orelse {
-            c.vips.errorExit("unable to open file");
-            unreachable;
-        };
+pub fn errorExit(comptime efmt: []const u8, args: anytype) noreturn {
+    std.debug.print(efmt, args);
+    //TODO: fix Gir, fmt is nullable
+    vips.errorExit(null, c_null);
+    unreachable;
+}
 
-        return .{ ._cImage = image };
+/// See `vips.leakSet` for more details
+pub fn leakSet(leak: bool) void {
+    vips.leakSet(@intFromBool(leak));
+}
+
+pub fn defaultLogger() void {
+    _ = c.glib.logSetHandler("VIPS", c.glib.LogLevelFlags.flags_level_warning, vipsWarningHandler, c_null);
+}
+
+// Custom warning handler to filter out module-loading errors
+fn vipsWarningHandler(domain: ?[*:0]const u8, level: c.glib.LogLevelFlags, message: [*c]const u8, user_data: ?*anyopaque) callconv(.c) void {
+    // Ignore ONLY "unable to load module" warnings
+    if (std.mem.indexOf(u8, std.mem.span(message), "unable to load") == null) {
+        // Print all other warnings to stderr
+        c.glib.logDefaultHandler(domain, level, message, user_data);
     }
-
-    _cImage: *c.vips.Image,
-    Image: Zimage(zvips) = .{},
-};
+}

@@ -20,7 +20,7 @@ pub fn build(b: *Build) void {
     const strip = false;
     const lto = lld;
 
-    const zivips = b.dependency("zivips", .{
+    const zvips = b.dependency("zvips", .{
         .target = target,
         .optimize = optimize,
         .linkage = .static,
@@ -31,11 +31,11 @@ pub fn build(b: *Build) void {
         .@"no-bin" = no_bin,
     });
 
-    const libzivips: Lib = lib: {
+    const libzvips: Lib = lib: {
         if (no_bin) {
-            break :lib .{ .lazy = zivips.namedLazyPath("zivips") };
+            break :lib .{ .lazy = zvips.namedLazyPath("zvips") };
         } else {
-            break :lib .{ .compile = zivips.artifact("zivips") };
+            break :lib .{ .compile = zvips.artifact("zvips") };
         }
     };
 
@@ -45,7 +45,7 @@ pub fn build(b: *Build) void {
         .optimize = optimize,
         .strip = strip,
     });
-    switch (libzivips) {
+    switch (libzvips) {
         .lazy => |lazy| {
             exe_mod.addObjectFile(lazy);
         },
@@ -53,7 +53,7 @@ pub fn build(b: *Build) void {
             exe_mod.linkLibrary(compile);
         },
     }
-    exe_mod.addImport("zivips", zivips.module("zivips"));
+    exe_mod.addImport("zvips", zvips.module("zvips"));
 
     const exe = b.addExecutable(.{
         .name = "basic",
