@@ -1,10 +1,9 @@
 const std = @import("std");
 
-const c = @import("root.zig").c;
-const c_null = c.c_null;
-const vips = c.vips;
 const varargs = @import("varargs.zig");
 const Options = @import("Options.zig");
+const c = @import("root.zig").c;
+const c_null = c.c_null;
 
 const Image = @This();
 
@@ -25,7 +24,7 @@ pub fn newFromFile(file_name: []const u8, options: Options.Image.Load) ?Image {
 
     const file_with_options: [:0]const u8 = std.mem.joinZ(fba, "", &.{ file_name, option_string }) catch unreachable;
 
-    return .{ .image = varargs.call(vips.Image.newFromFile, file_with_options, .{}) };
+    return .{ .image = varargs.call(c.vips.Image.newFromFile, file_with_options, .{}) };
 }
 
 pub fn avg(self: Image) error{FailedToComputeAvg}!f64 {
