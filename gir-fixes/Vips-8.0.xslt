@@ -40,4 +40,11 @@
     </xsl:copy>
   </xsl:template>
 
+  <xsl:template match="core:function[@c:identifier='vips_error_exit']/core:parameters/core:parameter[@name='fmt']">
+    <xsl:copy>
+      <xsl:attribute name="nullable">1</xsl:attribute>
+      <xsl:copy-of select="@* | node()" />
+    </xsl:copy>
+  </xsl:template>
+
 </xsl:stylesheet>
