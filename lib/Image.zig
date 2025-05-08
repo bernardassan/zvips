@@ -17,12 +17,13 @@ image: ?*c.vips.Image,
 pub fn newFromFile(file_name: []const u8, options: Options.Image.Load) ?Image {
     var buf: [256]u8 = undefined;
     var ba: std.heap.FixedBufferAllocator = .init(&buf);
+
     const fba = ba.allocator();
+    defer ba.reset();
 
-    const option_string = options.toString(fba);
-    defer fba.free(option_string);
+    const option_string = options.toString(fba) catch @panic("Oom");
 
-    const file_with_options: [:0]const u8 = std.mem.joinZ(fba, "", &.{ file_name, option_string }) catch unreachable;
+    const file_with_options: [:0]const u8 = std.mem.joinZ(fba, "", &.{ file_name, option_string }) catch @panic("Oom");
 
     return .{ .image = varargs.call(c.vips.Image.newFromFile, file_with_options, .{}) };
 }

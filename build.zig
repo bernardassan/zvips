@@ -43,7 +43,7 @@ pub fn build(b: *Build) void {
         .target = target,
         .optimize = optimize,
         .link_libc = true,
-        .sanitize_c = true,
+        .sanitize_c = .full,
         .stack_check = true,
         .strip = strip,
     });
