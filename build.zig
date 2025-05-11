@@ -18,6 +18,26 @@ pub fn build(b: *Build) void {
     const lld = b.option(bool, "lld", "Use the llvm's lld linker") orelse false;
     const linkage = b.option(std.builtin.LinkMode, "linkage", "Choose linkage of zvips") orelse .static;
 
+    const fmt_dirs: []const []const u8 = &.{ "bindings", "lib", "examples" };
+    b.step("fmt", "Modify source files in place to have conforming formatting")
+        .dependOn(&b.addFmt(.{ .paths = fmt_dirs }).step);
+
+    const autodoc = b.addObject(.{
+        .name = "docs",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("lib/root.zig"),
+            .target = target,
+            .optimize = .Debug,
+        }),
+    });
+    const install_docs = b.addInstallDirectory(.{
+        .source_dir = autodoc.getEmittedDocs(),
+        .install_dir = .prefix,
+        .install_subdir = "docs",
+    });
+    const docs_step = b.step("docs", "Build and install the library documentation");
+    docs_step.dependOn(&install_docs.step);
+
     const gobject = b.dependency("gobject", .{
         .target = target,
         .optimize = optimize,
