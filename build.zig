@@ -19,6 +19,9 @@ pub fn build(b: *Build) void {
     const linkage = b.option(std.builtin.LinkMode, "linkage", "Choose linkage of zvips") orelse .static;
     const codegen = b.option(bool, "codegen", "regenerate the libvips bindings") orelse false;
 
+    const fmt = b.step("fmt", "Modify source files in place to have conforming formatting");
+    const docs = b.step("docs", "Build and install the library documentation");
+
     const vips = b.dependency("libvips", .{
         .target = target,
         .optimize = optimize,
@@ -47,6 +50,24 @@ pub fn build(b: *Build) void {
     });
     zvips.pie = llvm;
     zvips.want_lto = lto;
+
+    const fmt_dirs: []const []const u8 = &.{ "bindings", "lib", "examples" };
+    fmt.dependOn(&b.addFmt(.{ .paths = fmt_dirs }).step);
+
+    const autodoc = b.addObject(.{
+        .name = "docs",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("lib/root.zig"),
+            .target = target,
+            .optimize = .Debug,
+        }),
+    });
+    const install_docs = b.addInstallDirectory(.{
+        .source_dir = autodoc.getEmittedDocs(),
+        .install_dir = .prefix,
+        .install_subdir = "docs",
+    });
+    docs.dependOn(&install_docs.step);
 
     if (no_bin) {
         const vips_path = zvips.getEmittedBin();
