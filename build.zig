@@ -22,21 +22,7 @@ pub fn build(b: *Build) void {
     b.step("fmt", "Modify source files in place to have conforming formatting")
         .dependOn(&b.addFmt(.{ .paths = fmt_dirs }).step);
 
-    const autodoc = b.addObject(.{
-        .name = "docs",
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("lib/root.zig"),
-            .target = target,
-            .optimize = .Debug,
-        }),
-    });
-    const install_docs = b.addInstallDirectory(.{
-        .source_dir = autodoc.getEmittedDocs(),
-        .install_dir = .prefix,
-        .install_subdir = "docs",
-    });
     const docs_step = b.step("docs", "Build and install the library documentation");
-    docs_step.dependOn(&install_docs.step);
 
     const gobject = b.dependency("gobject", .{
         .target = target,
@@ -88,6 +74,22 @@ pub fn build(b: *Build) void {
     } else {
         b.installArtifact(zvips);
     }
+
+    const autodoc = b.addObject(.{
+        .name = "docs",
+        .root_module = mod,
+        .max_rss = std.fmt.parseIntSizeSuffix("40MiB", 10) catch unreachable,
+        .optimize = .Debug,
+        .use_lld = lld,
+        .use_llvm = llvm,
+    });
+
+    const install_docs = b.addInstallDirectory(.{
+        .source_dir = autodoc.getEmittedDocs(),
+        .install_dir = .prefix,
+        .install_subdir = "docs",
+    });
+    docs_step.dependOn(&install_docs.step);
 }
 
 fn codeGen(b: *Build, gobject: *Build.Dependency) Build.LazyPath {
