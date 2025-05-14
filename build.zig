@@ -36,9 +36,9 @@ pub fn build(b: *Build) void {
         .stack_check = true,
         .strip = strip,
     });
-    mod.addImport("vips", vips.module("vips8"));
-    mod.addImport("glib", vips.module("glib2"));
-    mod.addImport("gobject", vips.module("gobject2"));
+    mod.addImport("vips8", vips.module("vips8"));
+    mod.addImport("glib2", vips.module("glib2"));
+    mod.addImport("gobject2", vips.module("gobject2"));
 
     const zvips = b.addLibrary(.{
         .name = "zvips",
