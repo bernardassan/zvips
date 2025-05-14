@@ -1,35 +1,32 @@
 const std = @import("std");
 
 pub const c = struct {
-    pub const c_null = @as(?*anyopaque, null);
-    pub const glib = @import("glib");
-    pub const gobject = @import("gobject");
-    pub const vips = @import("vips");
+    pub const @"null" = @as(?*anyopaque, null);
+    pub const glib = @import("glib2");
+    pub const gobject = @import("gobject2");
+    pub const vips = @import("vips8");
 };
 pub const Image = @import("Image.zig");
 
-const c_null = c.c_null;
-const vips = c.vips;
-
-/// See `vips.init` for more details
+/// See `c.vips.init` for more details
 pub fn init(app_name: [:0]const u8) error{FailedToStart}!void {
-    if (vips.init(app_name) != 0) return error.FailedToStart;
+    if (c.vips.init(app_name) != 0) return error.FailedToStart;
 }
 
+/// See `c.vips.errorExit` for more details
 pub fn errorExit(comptime efmt: []const u8, args: anytype) noreturn {
     std.debug.print(efmt, args);
-    //TODO: fix Gir, fmt is nullable
-    vips.errorExit(null, c_null);
+    c.vips.errorExit(null, c.null);
     unreachable;
 }
 
-/// See `vips.leakSet` for more details
+/// See `c.vips.leakSet` for more details
 pub fn leakSet(leak: bool) void {
-    vips.leakSet(@intFromBool(leak));
+    c.vips.leakSet(@intFromBool(leak));
 }
 
 pub fn defaultLogger() void {
-    _ = c.glib.logSetHandler("VIPS", c.glib.LogLevelFlags.flags_level_warning, vipsWarningHandler, c_null);
+    _ = c.glib.logSetHandler("VIPS", c.glib.LogLevelFlags.flags_level_warning, vipsWarningHandler, c.null);
 }
 
 // Custom warning handler to filter out module-loading errors

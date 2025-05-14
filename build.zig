@@ -53,9 +53,9 @@ pub fn build(b: *Build) void {
         .stack_check = true,
         .strip = strip,
     });
-    mod.addImport("vips", vips.module("vips8"));
-    mod.addImport("glib", vips.module("glib2"));
-    mod.addImport("gobject", vips.module("gobject2"));
+    mod.addImport("vips8", vips.module("vips8"));
+    mod.addImport("glib2", vips.module("glib2"));
+    mod.addImport("gobject2", vips.module("gobject2"));
 
     const zvips = b.addLibrary(.{
         .name = "zvips",
@@ -63,7 +63,7 @@ pub fn build(b: *Build) void {
         .root_module = mod,
         .use_lld = lld,
         .use_llvm = llvm,
-        .max_rss = std.fmt.parseIntSizeSuffix("100MiB", 10) catch unreachable,
+        .max_rss = std.fmt.parseIntSizeSuffix("40MiB", 10) catch unreachable,
     });
     zvips.pie = llvm;
     zvips.want_lto = lto;
@@ -76,13 +76,15 @@ pub fn build(b: *Build) void {
     }
 
     const autodoc = b.addObject(.{
-        .name = "docs",
+        .name = "zvips",
         .root_module = mod,
-        .max_rss = std.fmt.parseIntSizeSuffix("40MiB", 10) catch unreachable,
         .optimize = .Debug,
+        .max_rss = std.fmt.parseIntSizeSuffix("40MiB", 10) catch unreachable,
         .use_lld = lld,
         .use_llvm = llvm,
     });
+    autodoc.pie = llvm;
+    autodoc.want_lto = lto;
 
     const install_docs = b.addInstallDirectory(.{
         .source_dir = autodoc.getEmittedDocs(),
