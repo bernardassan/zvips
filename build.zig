@@ -46,7 +46,7 @@ pub fn build(b: *Build) void {
         .root_module = mod,
         .use_lld = lld,
         .use_llvm = llvm,
-        .max_rss = std.fmt.parseIntSizeSuffix("105MiB", 10) catch unreachable,
+        .max_rss = if (isWsl()) rss("97MiB") else rss("40MiB"),
     });
     zvips.pie = llvm;
     zvips.want_lto = lto;
@@ -55,13 +55,16 @@ pub fn build(b: *Build) void {
     fmt.dependOn(&b.addFmt(.{ .paths = fmt_dirs }).step);
 
     const autodoc = b.addObject(.{
-        .name = "docs",
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("lib/root.zig"),
-            .target = target,
-            .optimize = .Debug,
-        }),
+        .name = "zvips",
+        .root_module = mod,
+        .optimize = .Debug,
+        .max_rss = if (isWsl()) rss("95MiB") else rss("40MiB"),
+        .use_lld = lld,
+        .use_llvm = llvm,
     });
+    autodoc.pie = llvm;
+    autodoc.want_lto = lto;
+
     const install_docs = b.addInstallDirectory(.{
         .source_dir = autodoc.getEmittedDocs(),
         .install_dir = .prefix,
@@ -111,6 +114,14 @@ fn codeGen(b: *Build, gobject: *Build.Dependency) Build.LazyPath {
     return output;
 }
 
+fn isWsl() bool {
+    if (builtin.os.tag != .linux) return false;
+    const uname = std.posix.uname();
+    if (std.mem.endsWith(u8, uname.release[0..], "WSL2") or
+        std.mem.indexOf(u8, uname.release[0..], "microsoft") != null) return true;
+    return false;
+}
+
 // ensures the currently in-use zig version is at least the minimum required
 fn checkVersion() void {
     const supported_version = std.SemanticVersion.parse(build_zon.minimum_zig_version) catch unreachable;
@@ -120,4 +131,8 @@ fn checkVersion() void {
     if (order == .lt) {
         @compileError(std.fmt.comptimePrint("Update your zig toolchain to >= {s}", .{build_zon.minimum_zig_version}));
     }
+}
+
+fn rss(size: []const u8) usize {
+    return std.fmt.parseIntSizeSuffix(size, 10) catch unreachable;
 }
