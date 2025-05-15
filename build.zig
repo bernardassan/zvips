@@ -46,7 +46,7 @@ pub fn build(b: *Build) void {
         .root_module = mod,
         .use_lld = lld,
         .use_llvm = llvm,
-        .max_rss = if (isWsl()) rss("97MiB") else rss("40MiB"),
+        .max_rss = if (is(.wsl)) rss("97MiB") else if (is(.ubuntu)) rss("295MiB") else rss("40MiB"),
     });
     zvips.pie = llvm;
     zvips.want_lto = lto;
@@ -58,7 +58,7 @@ pub fn build(b: *Build) void {
         .name = "zvips",
         .root_module = mod,
         .optimize = .Debug,
-        .max_rss = if (isWsl()) rss("95MiB") else rss("40MiB"),
+        .max_rss = if (is(.wsl)) rss("95MiB") else if (is(.ubuntu)) rss("295MiB") else rss("40MiB"),
         .use_lld = lld,
         .use_llvm = llvm,
     });
@@ -114,12 +114,13 @@ fn codeGen(b: *Build, gobject: *Build.Dependency) Build.LazyPath {
     return output;
 }
 
-fn isWsl() bool {
+fn is(Os: enum { wsl, ubuntu }) bool {
     if (builtin.os.tag != .linux) return false;
     const uname = std.posix.uname();
-    if (std.mem.endsWith(u8, uname.release[0..], "WSL2") or
-        std.mem.indexOf(u8, uname.release[0..], "microsoft") != null) return true;
-    return false;
+    return switch (Os) {
+        .wsl => std.mem.endsWith(u8, uname.release[0..], "WSL2"),
+        .ubuntu => std.mem.indexOf(u8, uname.version[0..], "Ubuntu") != null,
+    };
 }
 
 // ensures the currently in-use zig version is at least the minimum required
