@@ -3,7 +3,6 @@ const std = @import("std");
 const varargs = @import("varargs.zig");
 const Options = @import("Options.zig");
 const c = @import("root.zig").c;
-const c_null = c.c_null;
 
 const Image = @This();
 
@@ -13,23 +12,24 @@ image: ?*c.vips.Image,
 // https://github.com/davidbyttow/govips/blob/master/vips/image.go#L126
 // CLEAR_ASSUMPTION: vips might need multiple args before the optional args
 // TODO: use the input.extentions[option=value] parameter setting approach
-/// See `vips.Image.newFromFile` for more details
+/// See `c.vips.Image.newFromFile` for more details
 pub fn newFromFile(file_name: []const u8, options: Options.Image.Load) ?Image {
     var buf: [256]u8 = undefined;
     var ba: std.heap.FixedBufferAllocator = .init(&buf);
+
     const fba = ba.allocator();
+    defer ba.reset();
 
-    const option_string = options.toString(fba);
-    defer fba.free(option_string);
+    const option_string = options.toString(fba) catch @panic("Oom");
 
-    const file_with_options: [:0]const u8 = std.mem.joinZ(fba, "", &.{ file_name, option_string }) catch unreachable;
+    const file_with_options: [:0]const u8 = std.mem.joinZ(fba, "", &.{ file_name, option_string }) catch @panic("Oom");
 
     return .{ .image = varargs.call(c.vips.Image.newFromFile, file_with_options, .{}) };
 }
 
 pub fn avg(self: Image) error{FailedToComputeAvg}!f64 {
     var _avg: f64 = undefined;
-    if (self.image.?.avg(&_avg, c_null) != 0) return error.FailedToComputeAvg;
+    if (self.image.?.avg(&_avg, c.null) != 0) return error.FailedToComputeAvg;
     return _avg;
 }
 
