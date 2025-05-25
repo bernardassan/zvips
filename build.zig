@@ -19,6 +19,9 @@ pub fn build(b: *Build) void {
     const linkage = b.option(std.builtin.LinkMode, "linkage", "Choose linkage of zvips") orelse .static;
     const codegen = b.option(bool, "codegen", "regenerate the libvips bindings") orelse false;
 
+    const fmt = b.step("fmt", "Modify source files in place to have conforming formatting");
+    const docs = b.step("docs", "Build and install the library documentation");
+
     const vips = b.dependency("libvips", .{
         .target = target,
         .optimize = optimize,
@@ -33,9 +36,9 @@ pub fn build(b: *Build) void {
         .stack_check = true,
         .strip = strip,
     });
-    mod.addImport("vips", vips.module("vips8"));
-    mod.addImport("glib", vips.module("glib2"));
-    mod.addImport("gobject", vips.module("gobject2"));
+    mod.addImport("vips8", vips.module("vips8"));
+    mod.addImport("glib2", vips.module("glib2"));
+    mod.addImport("gobject2", vips.module("gobject2"));
 
     const zvips = b.addLibrary(.{
         .name = "zvips",
@@ -43,10 +46,31 @@ pub fn build(b: *Build) void {
         .root_module = mod,
         .use_lld = lld,
         .use_llvm = llvm,
-        .max_rss = std.fmt.parseIntSizeSuffix("105MiB", 10) catch unreachable,
+        .max_rss = if (is(.wsl)) rss("97MiB") else if (is(.ubuntu)) rss("295MiB") else rss("105MiB"),
     });
     zvips.pie = llvm;
     zvips.want_lto = lto;
+
+    const fmt_dirs: []const []const u8 = &.{ "bindings", "lib", "examples" };
+    fmt.dependOn(&b.addFmt(.{ .paths = fmt_dirs }).step);
+
+    const autodoc = b.addObject(.{
+        .name = "zvips",
+        .root_module = mod,
+        .optimize = .Debug,
+        .max_rss = if (is(.wsl)) rss("95MiB") else if (is(.ubuntu)) rss("295MiB") else rss("105MiB"),
+        .use_lld = lld,
+        .use_llvm = llvm,
+    });
+    autodoc.pie = llvm;
+    autodoc.want_lto = lto;
+
+    const install_docs = b.addInstallDirectory(.{
+        .source_dir = autodoc.getEmittedDocs(),
+        .install_dir = .prefix,
+        .install_subdir = "docs",
+    });
+    docs.dependOn(&install_docs.step);
 
     if (no_bin) {
         const vips_path = zvips.getEmittedBin();
@@ -90,6 +114,15 @@ fn codeGen(b: *Build, gobject: *Build.Dependency) Build.LazyPath {
     return output;
 }
 
+fn is(Os: enum { wsl, ubuntu }) bool {
+    if (builtin.os.tag != .linux) return false;
+    const uname = std.posix.uname();
+    return switch (Os) {
+        .wsl => std.mem.endsWith(u8, uname.release[0..], "WSL2"),
+        .ubuntu => std.mem.indexOf(u8, uname.version[0..], "Ubuntu") != null,
+    };
+}
+
 // ensures the currently in-use zig version is at least the minimum required
 fn checkVersion() void {
     const supported_version = std.SemanticVersion.parse(build_zon.minimum_zig_version) catch unreachable;
@@ -99,4 +132,8 @@ fn checkVersion() void {
     if (order == .lt) {
         @compileError(std.fmt.comptimePrint("Update your zig toolchain to >= {s}", .{build_zon.minimum_zig_version}));
     }
+}
+
+fn rss(size: []const u8) usize {
+    return std.fmt.parseIntSizeSuffix(size, 10) catch unreachable;
 }
