@@ -46,7 +46,7 @@ pub fn build(b: *Build) void {
         .root_module = mod,
         .use_lld = lld,
         .use_llvm = llvm,
-        .max_rss = if (is(.wsl)) rss("97MiB") else if (is(.ubuntu)) rss("295MiB") else rss("40MiB"),
+        .max_rss = if (is(.wsl)) rss("97MiB") else if (is(.ubuntu)) rss("295MiB") else rss("105MiB"),
     });
     zvips.pie = llvm;
     zvips.want_lto = lto;
@@ -58,7 +58,7 @@ pub fn build(b: *Build) void {
         .name = "zvips",
         .root_module = mod,
         .optimize = .Debug,
-        .max_rss = if (is(.wsl)) rss("95MiB") else if (is(.ubuntu)) rss("295MiB") else rss("40MiB"),
+        .max_rss = if (is(.wsl)) rss("95MiB") else if (is(.ubuntu)) rss("295MiB") else rss("105MiB"),
         .use_lld = lld,
         .use_llvm = llvm,
     });
