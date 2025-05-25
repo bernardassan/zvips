@@ -1,13 +1,13 @@
 .{
-    .name = .zivips,
+    .name = .zvips,
     .version = "0.1.0",
-    .fingerprint = 0x6038cca730644a1d, // Changing this has security and trust implications.
+    .fingerprint = 0x9a2159ec397598f9, // Changing this has security and trust implications.
     .minimum_zig_version = "0.15.0-dev.208+8acedfd5b",
     .dependencies = .{
-        .gobject = .{
+        .@"zig-gobject" = .{
             .url = "https://github.com/ianprime0509/zig-gobject/archive/9500e7f21eb6858f78ea5eda26c90b0cc2ccdbbd.tar.gz",
             .hash = "gobject_codegen-0.3.0-B33qzcS-BgB8CppArgKrHAS6dDmk7R1NEQJeVcsm6GLd",
-            .lazy = false,
+            .lazy = true,
         },
         .libvips = .{
             .path = "bindings",

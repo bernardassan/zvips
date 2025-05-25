@@ -17,33 +17,19 @@ pub fn build(b: *Build) void {
     const llvm = b.option(bool, "llvm", "Use the llvm codegen backend") orelse false;
     const lld = b.option(bool, "lld", "Use the llvm's lld linker") orelse false;
     const linkage = b.option(std.builtin.LinkMode, "linkage", "Choose linkage of zvips") orelse .static;
-
-    const gobject = b.dependency("gobject", .{
-        .target = target,
-        .optimize = optimize,
-    });
+    const codegen = b.option(bool, "codegen", "regenerate the libvips bindings") orelse false;
 
     const vips = b.dependency("libvips", .{
         .target = target,
         .optimize = optimize,
     });
 
-    const output = codeGen(b, gobject);
-
-    const codegen = b.step("codegen", "Do codegen");
-    const install_bindings = b.addInstallDirectory(.{
-        .install_dir = .{ .custom = "../" },
-        .install_subdir = "bindings",
-        .source_dir = output,
-    });
-    codegen.dependOn(&install_bindings.step);
-
     const mod = b.addModule("zvips", .{
         .root_source_file = b.path("lib/root.zig"),
         .target = target,
         .optimize = optimize,
         .link_libc = true,
-        .sanitize_c = true,
+        .sanitize_c = .full,
         .stack_check = true,
         .strip = strip,
     });
@@ -57,7 +43,7 @@ pub fn build(b: *Build) void {
         .root_module = mod,
         .use_lld = lld,
         .use_llvm = llvm,
-        .max_rss = std.fmt.parseIntSizeSuffix("100MiB", 10) catch unreachable,
+        .max_rss = std.fmt.parseIntSizeSuffix("105MiB", 10) catch unreachable,
     });
     zvips.pie = llvm;
     zvips.want_lto = lto;
@@ -67,6 +53,23 @@ pub fn build(b: *Build) void {
         b.addNamedLazyPath("zvips", vips_path);
     } else {
         b.installArtifact(zvips);
+    }
+
+    if (codegen) {
+        if (b.lazyDependency("zig-gobject", .{
+            .target = target,
+            .optimize = optimize,
+        })) |gobject_introspection| {
+            const output = codeGen(b, gobject_introspection);
+
+            const install_bindings = b.addInstallDirectory(.{
+                .install_dir = .{ .custom = "../" },
+                .install_subdir = "bindings",
+                .source_dir = output,
+            });
+            install_bindings.step.name = "install generated bindings to bindings/";
+            b.getInstallStep().dependOn(&install_bindings.step);
+        }
     }
 }
 

@@ -25713,7 +25713,7 @@ pub const MAXUINT8 = 255;
 /// Like `gtk_micro_version`, but from the headers used at
 /// application compile time, rather than from the library
 /// linked against at application run time.
-pub const MICRO_VERSION = 1;
+pub const MICRO_VERSION = 2;
 /// The minimum value which can be held in a `gint16`.
 pub const MININT16 = -32768;
 /// The minimum value which can be held in a `gint32`.

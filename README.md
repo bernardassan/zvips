@@ -1,4 +1,4 @@
-# Zivips
+# Zvips
 Libvips bindings for Zig using GObject Introspection
 
 # System Dependencies
