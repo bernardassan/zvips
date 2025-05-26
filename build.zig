@@ -58,7 +58,7 @@ pub fn build(b: *Build) void {
         .name = "zvips",
         .root_module = mod,
         .optimize = .Debug,
-        .max_rss = if (is(.wsl)) rss("95MiB") else if (is(.ubuntu)) rss("295MiB") else rss("105MiB"),
+        .max_rss = if (is(.wsl)) rss("95MiB") else if (is(.ubuntu)) rss("295MiB") else rss("110MiB"),
         .use_lld = lld,
         .use_llvm = llvm,
     });
@@ -70,6 +70,7 @@ pub fn build(b: *Build) void {
         .install_dir = .prefix,
         .install_subdir = "docs",
     });
+    install_docs.step.name = "install generated docs to zig-out/docs";
     docs.dependOn(&install_docs.step);
 
     if (no_bin) {

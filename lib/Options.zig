@@ -82,125 +82,161 @@ const Heif = struct {
 
 // TODO: add general load and save options and loader specific options
 // .ie general Foreign Load & Save options
-pub const Image = struct {
-    pub const Load = union(enum) {
-        heif: Heif.Load,
+/// caller owns memory and must free/reset when done
+pub fn toString(file_name: []const u8, option: ?union(enum) {
+    load: ?Load,
+    save: ?Save,
+}, fba: std.mem.Allocator) ![:0]const u8 {
+    if (option) |options| {
+        const option_string = switch (options) {
+            .load => |load_| if (load_) |load| try load.toString(fba) else return try fba.dupeZ(u8, file_name),
+            .save => |save_| if (save_) |save| try save.toString(fba) else return try fba.dupeZ(u8, file_name),
+        };
 
-        /// caller owns memory and must free with `allocator.free` when done
-        pub fn toString(self: Load, allocator: std.mem.Allocator) ![]const u8 {
-            const char_count = 128; //random number bump if limit is hit
-            var options = try std.ArrayList(u8).initCapacity(allocator, char_count);
-            options.appendAssumeCapacity('[');
+        return try std.mem.joinZ(fba, "", &.{ file_name, option_string });
+    } else {
+        return try fba.dupeZ(u8, file_name);
+    }
+}
 
-            var writer = options.writer();
+pub const Load = union(enum) {
+    heif: Heif.Load,
 
-            switch (self) {
-                .heif => |heif_options| {
-                    if (heif_options.page) |page| {
-                        const min_page, const max_page = .{ 0, 100000 };
-                        debug.assert(page >= min_page and page <= max_page);
-                        try writer.print("page={}", .{page});
-                        try writer.writeByte(',');
-                    } else if (heif_options.n) |page_n| {
-                        const min_page_n, const max_page_n = .{ -1, 100000 };
-                        debug.assert(page_n >= min_page_n and page_n <= max_page_n);
-                        try writer.print("n={}", .{page_n});
-                        try writer.writeByte(',');
-                    } else if (heif_options.thumbnail) |thumbnail| {
-                        try writer.print("thumbnail={}", .{thumbnail});
-                        try writer.writeByte(',');
-                    } else if (heif_options.unlimited) |unlimited| {
-                        try writer.print("unlimited={}", .{unlimited});
-                        try writer.writeByte(',');
-                    } else if (heif_options.flags) |flags| {
-                        _ = flags;
-                        process.fatal("TODO: how to get ForeignFlags output", .{});
-                    } else if (heif_options.memory) |memory| {
-                        try writer.print("memory={}", .{memory});
-                        try writer.writeByte(',');
-                    } else if (heif_options.access) |access| {
-                        try writer.print("access={s}", .{@tagName(access)});
-                        try writer.writeByte(',');
-                    } else if (heif_options.@"fail-on") |fail_on| {
-                        try writer.print("fail-on={s}", .{@tagName(fail_on)});
-                        try writer.writeByte(',');
-                    } else if (heif_options.revalidate) |revalidate| {
-                        try writer.print("revalidate={}", .{revalidate});
-                        try writer.writeByte(',');
-                    }
-                },
-            }
+    /// caller owns memory and must free/reset when done
+    pub fn toString(self: Load, fba: std.mem.Allocator) ![]const u8 {
+        const char_count = 128; //random number bump if limit is hit
+        var options = try std.ArrayList(u8).initCapacity(fba, char_count);
+        options.appendAssumeCapacity('[');
 
-            // replace last ',' with ']'
-            options.replaceRangeAssumeCapacity(options.items.len - 1, 1, "]");
+        var writer = options.writer();
 
-            return try options.toOwnedSlice();
+        switch (self) {
+            .heif => |heif_options| {
+                if (heif_options.page) |page| {
+                    const min_page, const max_page = .{ 0, 100000 };
+                    debug.assert(page >= min_page and page <= max_page);
+                    try writer.print("page={}", .{page});
+                    try writer.writeByte(',');
+                } else if (heif_options.n) |page_n| {
+                    const min_page_n, const max_page_n = .{ -1, 100000 };
+                    debug.assert(page_n >= min_page_n and page_n <= max_page_n);
+                    try writer.print("n={}", .{page_n});
+                    try writer.writeByte(',');
+                } else if (heif_options.thumbnail) |thumbnail| {
+                    try writer.print("thumbnail={}", .{thumbnail});
+                    try writer.writeByte(',');
+                } else if (heif_options.unlimited) |unlimited| {
+                    try writer.print("unlimited={}", .{unlimited});
+                    try writer.writeByte(',');
+                } else if (heif_options.flags) |flags| {
+                    _ = flags;
+                    process.fatal("TODO: how to get ForeignFlags output", .{});
+                } else if (heif_options.memory) |memory| {
+                    try writer.print("memory={}", .{memory});
+                    try writer.writeByte(',');
+                } else if (heif_options.access) |access| {
+                    try writer.print("access={s}", .{@tagName(access)});
+                    try writer.writeByte(',');
+                } else if (heif_options.@"fail-on") |fail_on| {
+                    try writer.print("fail-on={s}", .{@tagName(fail_on)});
+                    try writer.writeByte(',');
+                } else if (heif_options.revalidate) |revalidate| {
+                    try writer.print("revalidate={}", .{revalidate});
+                    try writer.writeByte(',');
+                }
+            },
         }
-    };
-
-    pub const Save = union(enum) {
-        heif: Heif.Save,
-
-        /// caller owns memory and must free with `allocator.free` when done
-        pub fn toString(self: Save, allocator: std.mem.Allocator) ![]const u8 {
-            const char_count = 128; //random number bump if limit is hit
-            var options = try std.ArrayList(u8).initCapacity(allocator, char_count);
-            options.appendAssumeCapacity('[');
-
-            var writer = options.writer();
-
-            switch (self) {
-                .heif => |heif_save| {
-                    if (heif_save.Q) |Q| {
-                        const min_q, const max_q = .{ 1, 100 };
-                        debug.assert(Q >= min_q and Q <= max_q);
-                        try writer.print("Q={}", .{Q});
-                        try writer.writeByte(',');
-                    } else if (heif_save.bitdepth) |bitdepth| {
-                        const min_depth, const max_depth = .{ 8, 12 };
-                        debug.assert(bitdepth >= min_depth and bitdepth <= max_depth);
-                        try writer.print("bitdepth={}", .{bitdepth});
-                        try writer.writeByte(',');
-                    } else if (heif_save.lossless) |lossless| {
-                        try writer.print("lossless={}", .{lossless});
-                        try writer.writeByte(',');
-                    } else if (heif_save.compression) |compression| {
-                        try writer.print("compression={s}", .{@tagName(compression)});
-                        try writer.writeByte(',');
-                    } else if (heif_save.effort) |effort| {
-                        const min_effort, const max_effort = .{ 0, 9 };
-                        debug.assert(effort >= min_effort and effort <= max_effort);
-                        try writer.print("effort={}", .{effort});
-                        try writer.writeByte(',');
-                    } else if (heif_save.@"subsample-mode") |subsample_mode| {
-                        try writer.print("subsample-mode={s}", .{@tagName(subsample_mode)});
-                        try writer.writeByte(',');
-                    } else if (heif_save.encoder) |encoder| {
-                        try writer.print("encoder={s}", .{@tagName(encoder)});
-                        try writer.writeByte(',');
-                    } else if (heif_save.keep) |keep| {
-                        try writer.print("keep={s}", .{@tagName(keep)});
-                        try writer.writeByte(',');
-                    } else if (heif_save.background) |background| {
-                        _ = background;
-                        process.fatal("TODO: how to format ArrayDouble\nMaybe use native slice of doubles", .{});
-                    } else if (heif_save.@"page-height") |page_height| {
-                        const page_min, const page_max = .{ 0, 100000000 };
-                        debug.assert(page_height >= page_min and page_height <= page_max);
-                        try writer.print("page-height={}", .{page_height});
-                        try writer.writeByte(',');
-                    } else if (heif_save.profile) |profile| {
-                        try writer.print("profile={s}", .{profile});
-                        try writer.writeByte(',');
-                    }
-                },
-                .all => {},
-            }
-
-            // replace last ',' with ']'
+        // replace last ',' with ']'
+        if (options.items[options.items.len - 1] == ',') {
             options.replaceRangeAssumeCapacity(options.items.len - 1, 1, "]");
-
-            return try options.toOwnedSlice();
+        } else {
+            options.appendAssumeCapacity(']');
         }
-    };
+        return try options.toOwnedSlice();
+    }
+};
+
+pub const Save = union(enum) {
+    heif: Heif.Save,
+
+    /// caller owns memory and must free/reset when done
+    pub fn toString(self: Save, fba: std.mem.Allocator) ![]const u8 {
+        const char_count = 128; //random number bump if limit is hit
+        var options = try std.ArrayList(u8).initCapacity(fba, char_count);
+        options.appendAssumeCapacity('[');
+
+        var writer = options.writer();
+
+        switch (self) {
+            .heif => |heif_save| {
+                if (heif_save.Q) |Q| {
+                    const min_q, const max_q = .{ 1, 100 };
+                    debug.assert(Q >= min_q and Q <= max_q);
+                    try writer.print("Q={}", .{Q});
+                    try writer.writeByte(',');
+                } else if (heif_save.bitdepth) |bitdepth| {
+                    const min_depth, const max_depth = .{ 8, 12 };
+                    debug.assert(bitdepth >= min_depth and bitdepth <= max_depth);
+                    try writer.print("bitdepth={}", .{bitdepth});
+                    try writer.writeByte(',');
+                } else if (heif_save.lossless) |lossless| {
+                    try writer.print("lossless={}", .{lossless});
+                    try writer.writeByte(',');
+                } else if (heif_save.compression) |compression| {
+                    try writer.print("compression={s}", .{@tagName(compression)});
+                    try writer.writeByte(',');
+                } else if (heif_save.effort) |effort| {
+                    const min_effort, const max_effort = .{ 0, 9 };
+                    debug.assert(effort >= min_effort and effort <= max_effort);
+                    try writer.print("effort={}", .{effort});
+                    try writer.writeByte(',');
+                } else if (heif_save.@"subsample-mode") |subsample_mode| {
+                    try writer.print("subsample-mode={s}", .{@tagName(subsample_mode)});
+                    try writer.writeByte(',');
+                } else if (heif_save.encoder) |encoder| {
+                    try writer.print("encoder={s}", .{@tagName(encoder)});
+                    try writer.writeByte(',');
+                } else if (heif_save.keep) |keep| {
+                    try writer.print("keep=", .{});
+
+                    if (keep.exif) {
+                        try writer.print("exif:", .{});
+                    }
+                    if (keep.xmp) {
+                        try writer.print("xmp:", .{});
+                    }
+                    if (keep.iptc) {
+                        try writer.print("iptc:", .{});
+                    }
+                    if (keep.icc) {
+                        try writer.print("icc:", .{});
+                    }
+                    if (keep.other) {
+                        try writer.print("other", .{});
+                    }
+
+                    try writer.writeByte(',');
+                } else if (heif_save.background) |background| {
+                    _ = background;
+                    process.fatal("TODO: how to format ArrayDouble\nMaybe use native slice of doubles", .{});
+                } else if (heif_save.@"page-height") |page_height| {
+                    const page_min, const page_max = .{ 0, 100000000 };
+                    debug.assert(page_height >= page_min and page_height <= page_max);
+                    try writer.print("page-height={}", .{page_height});
+                    try writer.writeByte(',');
+                } else if (heif_save.profile) |profile| {
+                    try writer.print("profile={s}", .{profile});
+                    try writer.writeByte(',');
+                }
+            },
+        }
+
+        // replace last ',' with ']'
+        if (options.items[options.items.len - 1] == ',') {
+            options.replaceRangeAssumeCapacity(options.items.len - 1, 1, "]");
+        } else {
+            options.appendAssumeCapacity(']');
+        }
+        return try options.toOwnedSlice();
+    }
 };
