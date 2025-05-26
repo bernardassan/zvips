@@ -45,6 +45,8 @@ pub fn main() !void {
     };
     defer image.deinit();
 
+    try zvips.convert(.{ .img = image }, "output.avif", null);
+
     const avg = image.avg() catch unreachable;
     std.debug.print("Pixel average of {s} is {}\n", .{ args[1], avg });
 }
