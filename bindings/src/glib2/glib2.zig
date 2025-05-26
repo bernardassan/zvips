@@ -4389,7 +4389,7 @@ pub const KeyFile = opaque {
     ///
     /// The array of returned groups will be `NULL`-terminated, so
     /// `length` may optionally be `NULL`.
-    extern fn g_key_file_get_groups(p_key_file: *KeyFile, p_length: ?*usize) [*][*:0]u8;
+    extern fn g_key_file_get_groups(p_key_file: *KeyFile, p_length: ?*usize) [*:null]?[*:0]u8;
     pub const getGroups = g_key_file_get_groups;
 
     /// Returns the value associated with `key` under `group_name` as a signed
@@ -4425,7 +4425,7 @@ pub const KeyFile = opaque {
     /// The array of returned keys will be `NULL`-terminated, so `length` may
     /// optionally be `NULL`. If the `group_name` cannot be found,
     /// `glib.@"KeyFileError.GROUP_NOT_FOUND"` is returned.
-    extern fn g_key_file_get_keys(p_key_file: *KeyFile, p_group_name: [*:0]const u8, p_length: ?*usize, p_error: ?*?*glib.Error) ?[*][*:0]u8;
+    extern fn g_key_file_get_keys(p_key_file: *KeyFile, p_group_name: [*:0]const u8, p_length: ?*usize, p_error: ?*?*glib.Error) ?[*:null]?[*:0]u8;
     pub const getKeys = g_key_file_get_keys;
 
     /// Returns the actual locale which the result of
@@ -5919,7 +5919,7 @@ pub const MatchInfo = opaque {
     ///
     /// The strings are fetched from the string passed to the match function,
     /// so you cannot call this function after freeing the string.
-    extern fn g_match_info_fetch_all(p_match_info: *const MatchInfo) [*][*:0]u8;
+    extern fn g_match_info_fetch_all(p_match_info: *const MatchInfo) [*:null]?[*:0]u8;
     pub const fetchAll = g_match_info_fetch_all;
 
     /// Retrieves the text matching the capturing parentheses named `name`.
@@ -8240,7 +8240,7 @@ pub const Regex = opaque {
     /// separate characters wherever it matches the empty string between
     /// characters. For example splitting "ab c" using as a separator
     /// "\s*", you will get "a", "b" and "c".
-    extern fn g_regex_split_simple(p_pattern: [*:0]const u8, p_string: [*:0]const u8, p_compile_options: glib.RegexCompileFlags, p_match_options: glib.RegexMatchFlags) [*][*:0]u8;
+    extern fn g_regex_split_simple(p_pattern: [*:0]const u8, p_string: [*:0]const u8, p_compile_options: glib.RegexCompileFlags, p_match_options: glib.RegexMatchFlags) [*:null]?[*:0]u8;
     pub const splitSimple = g_regex_split_simple;
 
     /// Compiles the regular expression to an internal form, and does
@@ -8553,7 +8553,7 @@ pub const Regex = opaque {
     /// characters wherever it matches the empty string between characters.
     /// For example splitting "ab c" using as a separator "\s*", you will get
     /// "a", "b" and "c".
-    extern fn g_regex_split(p_regex: *const Regex, p_string: [*:0]const u8, p_match_options: glib.RegexMatchFlags) [*][*:0]u8;
+    extern fn g_regex_split(p_regex: *const Regex, p_string: [*:0]const u8, p_match_options: glib.RegexMatchFlags) [*:null]?[*:0]u8;
     pub const split = g_regex_split;
 
     /// Breaks the string on the pattern, and returns an array of the tokens.
@@ -8577,7 +8577,7 @@ pub const Regex = opaque {
     /// Setting `start_position` differs from just passing over a shortened
     /// string and setting `G_REGEX_MATCH_NOTBOL` in the case of a pattern
     /// that begins with any kind of lookbehind assertion, such as "\b".
-    extern fn g_regex_split_full(p_regex: *const Regex, p_string: [*]const u8, p_string_len: isize, p_start_position: c_int, p_match_options: glib.RegexMatchFlags, p_max_tokens: c_int, p_error: ?*?*glib.Error) ?[*][*:0]u8;
+    extern fn g_regex_split_full(p_regex: *const Regex, p_string: [*]const u8, p_string_len: isize, p_start_position: c_int, p_match_options: glib.RegexMatchFlags, p_max_tokens: c_int, p_error: ?*?*glib.Error) ?[*:null]?[*:0]u8;
     pub const splitFull = g_regex_split_full;
 
     /// Decreases reference count of `regex` by 1. When reference count drops
@@ -12515,7 +12515,7 @@ pub const Uri = opaque {
     /// Splits an URI list conforming to the text/uri-list
     /// mime type defined in RFC 2483 into individual URIs,
     /// discarding any comments. The URIs are not validated.
-    extern fn g_uri_list_extract_uris(p_uri_list: [*:0]const u8) [*][*:0]u8;
+    extern fn g_uri_list_extract_uris(p_uri_list: [*:0]const u8) [*:null]?[*:0]u8;
     pub const listExtractUris = g_uri_list_extract_uris;
 
     /// Parses `uri_string` according to `flags`. If the result is not a
@@ -13262,7 +13262,7 @@ pub const Variant = opaque {
     /// strings.
     ///
     /// If `length` is -1 then `strv` is `NULL`-terminated.
-    extern fn g_variant_new_bytestring_array(p_strv: [*]const [*:0]const u8, p_length: isize) *glib.Variant;
+    extern fn g_variant_new_bytestring_array(p_strv: [*]const ?[*:0]const u8, p_length: isize) *glib.Variant;
     pub const newBytestringArray = g_variant_new_bytestring_array;
 
     /// Creates a new dictionary entry `glib.Variant`. `key` and `value` must be
@@ -13383,7 +13383,7 @@ pub const Variant = opaque {
     /// `glib.variantIsObjectPath`.
     ///
     /// If `length` is -1 then `strv` is `NULL`-terminated.
-    extern fn g_variant_new_objv(p_strv: [*]const [*:0]const u8, p_length: isize) *glib.Variant;
+    extern fn g_variant_new_objv(p_strv: [*]const ?[*:0]const u8, p_length: isize) *glib.Variant;
     pub const newObjv = g_variant_new_objv;
 
     /// Parses `format` and returns the result.
@@ -13471,7 +13471,7 @@ pub const Variant = opaque {
     /// strings.
     ///
     /// If `length` is -1 then `strv` is `NULL`-terminated.
-    extern fn g_variant_new_strv(p_strv: [*]const [*:0]const u8, p_length: isize) *glib.Variant;
+    extern fn g_variant_new_strv(p_strv: [*]const ?[*:0]const u8, p_length: isize) *glib.Variant;
     pub const newStrv = g_variant_new_strv;
 
     /// Creates a string `glib.Variant` with the contents of `string`.
@@ -18739,7 +18739,7 @@ pub const buildFilenameValist = g_build_filename_valist;
 ///
 /// If you are building a path programmatically you may want to use
 /// `glib.PathBuf` instead.
-extern fn g_build_filenamev(p_args: [*][*:0]u8) [*:0]u8;
+extern fn g_build_filenamev(p_args: [*:null]?[*:0]u8) [*:0]u8;
 pub const buildFilenamev = g_build_filenamev;
 
 /// Creates a path from a series of elements using `separator` as the
@@ -18777,7 +18777,7 @@ pub const buildPath = g_build_path;
 /// as a string array, instead of variadic arguments.
 ///
 /// This function is mainly meant for language bindings.
-extern fn g_build_pathv(p_separator: [*:0]const u8, p_args: [*][*:0]u8) [*:0]u8;
+extern fn g_build_pathv(p_separator: [*:0]const u8, p_args: [*:null]?[*:0]u8) [*:0]u8;
 pub const buildPathv = g_build_pathv;
 
 /// Gets the canonical file name from `filename`. All triple slashes are turned into
@@ -19419,17 +19419,17 @@ pub const dpgettext2 = g_dpgettext2;
 
 /// Returns the value of the environment variable `variable` in the
 /// provided list `envp`.
-extern fn g_environ_getenv(p_envp: ?[*][*:0]u8, p_variable: [*:0]const u8) ?[*:0]const u8;
+extern fn g_environ_getenv(p_envp: ?[*:null]?[*:0]u8, p_variable: [*:0]const u8) ?[*:0]const u8;
 pub const environGetenv = g_environ_getenv;
 
 /// Sets the environment variable `variable` in the provided list
 /// `envp` to `value`.
-extern fn g_environ_setenv(p_envp: ?[*][*:0]u8, p_variable: [*:0]const u8, p_value: [*:0]const u8, p_overwrite: c_int) [*][*:0]u8;
+extern fn g_environ_setenv(p_envp: ?[*:null]?[*:0]u8, p_variable: [*:0]const u8, p_value: [*:0]const u8, p_overwrite: c_int) [*:null]?[*:0]u8;
 pub const environSetenv = g_environ_setenv;
 
 /// Removes the environment variable `variable` from the provided
 /// environment `envp`.
-extern fn g_environ_unsetenv(p_envp: ?[*][*:0]u8, p_variable: [*:0]const u8) [*][*:0]u8;
+extern fn g_environ_unsetenv(p_envp: ?[*:null]?[*:0]u8, p_variable: [*:0]const u8) [*:null]?[*:0]u8;
 pub const environUnsetenv = g_environ_unsetenv;
 
 /// Mark every file descriptor equal to or greater than `lowfd` to be closed
@@ -19944,7 +19944,7 @@ pub const getCurrentTime = g_get_current_time;
 ///
 /// The return value is freshly allocated and it should be freed with
 /// `glib.strfreev` when it is no longer needed.
-extern fn g_get_environ() [*][*:0]u8;
+extern fn g_get_environ() [*:null]?[*:0]u8;
 pub const getEnviron = g_get_environ;
 
 /// Determines the preferred character sets used for filenames.
@@ -20056,7 +20056,7 @@ pub const getLanguageNamesWithCategory = g_get_language_names_with_category;
 ///
 /// If you need the list of variants for the current locale,
 /// use `glib.getLanguageNames`.
-extern fn g_get_locale_variants(p_locale: [*:0]const u8) [*][*:0]u8;
+extern fn g_get_locale_variants(p_locale: [*:0]const u8) [*:null]?[*:0]u8;
 pub const getLocaleVariants = g_get_locale_variants;
 
 /// Queries the system monotonic time.
@@ -20544,7 +20544,7 @@ pub const ioCreateWatch = g_io_create_watch;
 /// array are in system codepage encoding, while in most of the typical
 /// use cases for environment variables in GLib-using programs you want
 /// the UTF-8 encoding that this function and `glib.getenv` provide.
-extern fn g_listenv() [*][*:0]u8;
+extern fn g_listenv() [*:null]?[*:0]u8;
 pub const listenv = g_listenv;
 
 /// Converts a string from UTF-8 to the encoding used for strings by
@@ -22330,19 +22330,19 @@ pub const spacedPrimesClosest = g_spaced_primes_closest;
 /// Note that the returned `child_pid` on Windows is a handle to the child
 /// process and not its identifier. Process handles and process identifiers
 /// are different concepts on Windows.
-extern fn g_spawn_async(p_working_directory: ?[*:0]const u8, p_argv: [*][*:0]u8, p_envp: ?[*][*:0]u8, p_flags: glib.SpawnFlags, p_child_setup: ?glib.SpawnChildSetupFunc, p_user_data: ?*anyopaque, p_child_pid: ?*glib.Pid, p_error: ?*?*glib.Error) c_int;
+extern fn g_spawn_async(p_working_directory: ?[*:0]const u8, p_argv: [*:null]?[*:0]u8, p_envp: ?[*:null]?[*:0]u8, p_flags: glib.SpawnFlags, p_child_setup: ?glib.SpawnChildSetupFunc, p_user_data: ?*anyopaque, p_child_pid: ?*glib.Pid, p_error: ?*?*glib.Error) c_int;
 pub const spawnAsync = g_spawn_async;
 
 /// Executes a child program asynchronously.
 ///
 /// Identical to `glib.spawnAsyncWithPipesAndFds` but with `n_fds` set to zero,
 /// so no FD assignments are used.
-extern fn g_spawn_async_with_fds(p_working_directory: ?[*:0]const u8, p_argv: [*][*:0]u8, p_envp: ?[*][*:0]u8, p_flags: glib.SpawnFlags, p_child_setup: ?glib.SpawnChildSetupFunc, p_user_data: ?*anyopaque, p_child_pid: ?*glib.Pid, p_stdin_fd: c_int, p_stdout_fd: c_int, p_stderr_fd: c_int, p_error: ?*?*glib.Error) c_int;
+extern fn g_spawn_async_with_fds(p_working_directory: ?[*:0]const u8, p_argv: [*:null]?[*:0]u8, p_envp: ?[*:null]?[*:0]u8, p_flags: glib.SpawnFlags, p_child_setup: ?glib.SpawnChildSetupFunc, p_user_data: ?*anyopaque, p_child_pid: ?*glib.Pid, p_stdin_fd: c_int, p_stdout_fd: c_int, p_stderr_fd: c_int, p_error: ?*?*glib.Error) c_int;
 pub const spawnAsyncWithFds = g_spawn_async_with_fds;
 
 /// Identical to `glib.spawnAsyncWithPipesAndFds` but with `n_fds` set to zero,
 /// so no FD assignments are used.
-extern fn g_spawn_async_with_pipes(p_working_directory: ?[*:0]const u8, p_argv: [*][*:0]u8, p_envp: ?[*][*:0]u8, p_flags: glib.SpawnFlags, p_child_setup: ?glib.SpawnChildSetupFunc, p_user_data: ?*anyopaque, p_child_pid: ?*glib.Pid, p_standard_input: ?*c_int, p_standard_output: ?*c_int, p_standard_error: ?*c_int, p_error: ?*?*glib.Error) c_int;
+extern fn g_spawn_async_with_pipes(p_working_directory: ?[*:0]const u8, p_argv: [*:null]?[*:0]u8, p_envp: ?[*:null]?[*:0]u8, p_flags: glib.SpawnFlags, p_child_setup: ?glib.SpawnChildSetupFunc, p_user_data: ?*anyopaque, p_child_pid: ?*glib.Pid, p_standard_input: ?*c_int, p_standard_output: ?*c_int, p_standard_error: ?*c_int, p_error: ?*?*glib.Error) c_int;
 pub const spawnAsyncWithPipes = g_spawn_async_with_pipes;
 
 /// Executes a child program asynchronously (your program will not
@@ -22644,7 +22644,7 @@ pub const spawnCommandLineAsync = g_spawn_command_line_async;
 /// the backslashes will be eaten, and the space will act as a
 /// separator. You need to enclose such paths with single quotes, like
 /// "'c:\\program files\\app\\app.exe' 'e:\\folder\\argument.txt'".
-extern fn g_spawn_command_line_sync(p_command_line: [*:0]const u8, p_standard_output: ?*[*]u8, p_standard_error: ?*[*]u8, p_wait_status: ?*c_int, p_error: ?*?*glib.Error) c_int;
+extern fn g_spawn_command_line_sync(p_command_line: [*:0]const u8, p_standard_output: ?*[*:0]u8, p_standard_error: ?*[*:0]u8, p_wait_status: ?*c_int, p_error: ?*?*glib.Error) c_int;
 pub const spawnCommandLineSync = g_spawn_command_line_sync;
 
 extern fn g_spawn_error_quark() glib.Quark;
@@ -22676,7 +22676,7 @@ pub const spawnExitErrorQuark = g_spawn_exit_error_quark;
 /// This function calls `glib.spawnAsyncWithPipes` internally; see that
 /// function for full details on the other parameters and details on
 /// how these functions work on Windows.
-extern fn g_spawn_sync(p_working_directory: ?[*:0]const u8, p_argv: [*][*:0]u8, p_envp: ?[*][*:0]u8, p_flags: glib.SpawnFlags, p_child_setup: ?glib.SpawnChildSetupFunc, p_user_data: ?*anyopaque, p_standard_output: ?*[*]u8, p_standard_error: ?*[*]u8, p_wait_status: ?*c_int, p_error: ?*?*glib.Error) c_int;
+extern fn g_spawn_sync(p_working_directory: ?[*:0]const u8, p_argv: [*:null]?[*:0]u8, p_envp: ?[*:null]?[*:0]u8, p_flags: glib.SpawnFlags, p_child_setup: ?glib.SpawnChildSetupFunc, p_user_data: ?*anyopaque, p_standard_output: ?*[*:0]u8, p_standard_error: ?*[*:0]u8, p_wait_status: ?*c_int, p_error: ?*?*glib.Error) c_int;
 pub const spawnSync = g_spawn_sync;
 
 /// An implementation of the standard ``sprintf`` function which supports
@@ -22823,7 +22823,7 @@ pub const strToAscii = g_str_to_ascii;
 /// for doing so is unspecified, but `translit_locale` (if specified) may
 /// improve the transliteration if the language of the source string is
 /// known.
-extern fn g_str_tokenize_and_fold(p_string: [*:0]const u8, p_translit_locale: ?[*:0]const u8, p_ascii_alternates: ?*[*][*:0]u8) [*][*:0]u8;
+extern fn g_str_tokenize_and_fold(p_string: [*:0]const u8, p_translit_locale: ?[*:0]const u8, p_ascii_alternates: ?*[*][*:0]u8) [*:null]?[*:0]u8;
 pub const strTokenizeAndFold = g_str_tokenize_and_fold;
 
 /// For each character in `string`, if the character is not in `valid_chars`,
@@ -22964,7 +22964,7 @@ pub const strdupVprintf = g_strdup_vprintf;
 /// copied.
 ///
 /// If called on a `NULL` value, ``glib.strdupv`` simply returns `NULL`.
-extern fn g_strdupv(p_str_array: ?[*][*:0]u8) ?[*][*:0]u8;
+extern fn g_strdupv(p_str_array: ?[*:null]?[*:0]u8) ?[*:null]?[*:0]u8;
 pub const strdupv = g_strdupv;
 
 /// Returns a string corresponding to the given error code, e.g. "no
@@ -23016,7 +23016,7 @@ pub const strescape = g_strescape;
 /// Frees an array of strings, as well as each string it contains.
 ///
 /// If `str_array` is `NULL`, this function simply returns.
-extern fn g_strfreev(p_str_array: ?[*][*:0]u8) void;
+extern fn g_strfreev(p_str_array: ?[*:null]?[*:0]u8) void;
 pub const strfreev = g_strfreev;
 
 /// An auxiliary function for `gettext` support (see `Q_`).
@@ -23034,7 +23034,7 @@ pub const strjoin = g_strjoin;
 /// If `str_array` has no items, the return value will be an
 /// empty string. If `str_array` contains a single item, `separator` will not
 /// appear in the resulting string.
-extern fn g_strjoinv(p_separator: ?[*:0]const u8, p_str_array: [*][*:0]u8) [*:0]u8;
+extern fn g_strjoinv(p_separator: ?[*:0]const u8, p_str_array: [*:null]?[*:0]u8) [*:0]u8;
 pub const strjoinv = g_strjoinv;
 
 /// Portability wrapper that calls ``strlcat`` on systems which have it,
@@ -23139,7 +23139,7 @@ pub const strsignal = g_strsignal;
 /// more useful than consistent handling of empty elements. If you do need
 /// to represent empty elements, you'll need to check for the empty string
 /// before calling ``glib.strsplit``.
-extern fn g_strsplit(p_string: [*:0]const u8, p_delimiter: [*:0]const u8, p_max_tokens: c_int) [*][*:0]u8;
+extern fn g_strsplit(p_string: [*:0]const u8, p_delimiter: [*:0]const u8, p_max_tokens: c_int) [*:null]?[*:0]u8;
 pub const strsplit = g_strsplit;
 
 /// Splits `string` into a number of tokens not containing any of the characters
@@ -23162,7 +23162,7 @@ pub const strsplit = g_strsplit;
 ///
 /// Note that this function works on bytes not characters, so it can't be used
 /// to delimit UTF-8 strings for anything but ASCII characters.
-extern fn g_strsplit_set(p_string: [*:0]const u8, p_delimiters: [*:0]const u8, p_max_tokens: c_int) [*][*:0]u8;
+extern fn g_strsplit_set(p_string: [*:0]const u8, p_delimiters: [*:0]const u8, p_max_tokens: c_int) [*:null]?[*:0]u8;
 pub const strsplitSet = g_strsplit_set;
 
 /// Searches the string `haystack` for the first occurrence
@@ -23217,7 +23217,7 @@ extern fn g_strv_get_type() usize;
 pub const strvGetType = g_strv_get_type;
 
 /// Returns the length of an array of strings. `str_array` must not be `NULL`.
-extern fn g_strv_length(p_str_array: [*][*:0]u8) c_uint;
+extern fn g_strv_length(p_str_array: [*:null]?[*:0]u8) c_uint;
 pub const strvLength = g_strv_length;
 
 /// Creates a new test case.
