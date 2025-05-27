@@ -16,7 +16,7 @@ pub const c = struct {
 };
 pub const Image = @import("Image.zig");
 
-/// Docs `c.vips.init`
+/// See `c.vips.init`
 /// enables `c.vips.leakSet` in .Debug mode
 pub fn init(app_name: [:0]const u8) !void {
     if (c.vips.init(app_name) != 0) return error.FailedToStart;
@@ -33,7 +33,7 @@ pub fn init(app_name: [:0]const u8) !void {
     }
 }
 
-/// Docs `c.vips.Image.writeToFile`
+/// See `c.vips.Image.writeToFile`
 pub fn convert(input: union(enum) {
     file: []const u8,
     img: Image,
@@ -62,14 +62,14 @@ pub fn convert(input: union(enum) {
     }
 }
 
-/// Docs `c.vips.errorExit`
+/// See `c.vips.errorExit`
 pub fn errorExit(comptime efmt: []const u8, args: anytype) noreturn {
     std.debug.print(efmt, args);
     c.vips.errorExit(null, c.null);
     unreachable;
 }
 
-/// Docs `c.vips.leakSet`
+/// See `c.vips.leakSet`
 pub fn leakSet(leak: bool) void {
     c.vips.leakSet(@intFromBool(leak));
 }

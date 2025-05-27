@@ -9,7 +9,7 @@ const Image = @This();
 cimage: *c.vips.Image,
 // https://github.com/davidbyttow/govips/blob/master/vips/image.go#L126
 // CLEAR_ASSUMPTION: vips might need multiple args before the optional args
-/// Docs `c.vips.Image.newFromFile`
+/// See `c.vips.Image.newFromFile`
 pub fn newFromFile(file_name: []const u8, options: ?Options.Load) ?Image {
     var buf: [256]u8 = undefined;
     var fba: std.heap.FixedBufferAllocator = .init(&buf);
