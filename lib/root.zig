@@ -54,7 +54,7 @@ pub fn convert(input: union(enum) {
 
     const file_with_options: [:0]const u8 = Options.toString(output_file, .{ .save = options }, buf_alloc) catch @panic("Oom");
 
-    if (varargs.call(c.vips.Image.writeToFile, .{ img.cimage, file_with_options }) != 0) return error.ConvertionError;
+    if (varargs.callT(c.vips.Image.writeToFile, .{ img.cimage, file_with_options }) != 0) return error.ConvertionError;
 
     switch (input) {
         .file => |file| logger.info("convert {s} to {s}", .{ file, file_with_options }),
