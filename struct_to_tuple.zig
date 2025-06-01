@@ -1,6 +1,19 @@
 const std = @import("std");
 
-fn StructToFlatTuple(comptime T: type, value: T) type {
+fn StructToFlatTuple(value: anytype) type {
+    const T, const active_field = blk: {
+        switch (@typeInfo(@TypeOf(value))) {
+            .@"union" => {
+                const active_tag = std.meta.activeTag(value);
+                const T = @FieldType(@TypeOf(value), @tagName(active_tag));
+                const active_field = @field(value, @tagName(active_tag));
+                break :blk .{ T, active_field };
+            },
+            else => {
+                break :blk .{ @TypeOf(value), value };
+            },
+        }
+    };
     const fields = std.meta.fields(T);
     var tuple_fields: [fields.len * 2 + 1]std.builtin.Type.StructField = undefined;
 
@@ -9,7 +22,7 @@ fn StructToFlatTuple(comptime T: type, value: T) type {
     for (fields) |field| {
         // skip null value fields
         if (@typeInfo(field.type) == .optional and
-            @field(value, field.name) == null) continue;
+            @field(active_field, field.name) == null) continue;
         const key_index = index * 2;
         const value_index = key_index + 1;
         index += 1;
@@ -28,10 +41,11 @@ fn StructToFlatTuple(comptime T: type, value: T) type {
                 type_info.@"enum".tag_type
             else if (type_info == .@"struct" and type_info.@"struct".layout == .@"packed")
                 type_info.@"struct".backing_integer.?
-            else if (type_info == .@"union" and type_info.@"union".layout == .@"packed")
-                type_info.@"union".fields
-            else
-                field.type;
+            else if (type_info == .@"union") {
+                const active_value = @field(active_field, field.name);
+                const TagType = @FieldType(@TypeOf(active_value), @tagName(std.meta.activeTag(active_value)));
+                break :blk TagType;
+            } else field.type;
         };
         // Field value entry
         tuple_fields[value_index] = .{
@@ -60,35 +74,50 @@ fn StructToFlatTuple(comptime T: type, value: T) type {
     return tuple;
 }
 
-fn flatTuple(comptime T: type, value: T) StructToFlatTuple(T, value) {
+fn flatTuple(value: anytype) StructToFlatTuple(value) {
+    const T, const active_field = blk: {
+        switch (@typeInfo(@TypeOf(value))) {
+            .@"union" => {
+                const active_tag = std.meta.activeTag(value);
+                const T = @FieldType(@TypeOf(value), @tagName(active_tag));
+                const active_field = @field(value, @tagName(active_tag));
+                break :blk .{ T, active_field };
+            },
+            else => {
+                break :blk .{ @TypeOf(value), value };
+            },
+        }
+    };
     if (@typeInfo(T) != .@"struct") @compileError("Expected struct type but got " ++ @typeName(T));
     const fields = std.meta.fields(T);
-    var tuple: StructToFlatTuple(T, value) = undefined;
-
+    var tuple: StructToFlatTuple(value) = undefined;
     var index, var end_index = .{ 0, 0 };
     for (fields) |field| {
         // skip null value fields
         if (@typeInfo(field.type) == .optional and
-            @field(value, field.name) == null) continue;
+            @field(active_field, field.name) == null) continue;
         const key_index = index * 2;
         const value_index = key_index + 1;
         // increment index
         index += 1;
         end_index = value_index + 1;
-        // field name
-        @field(tuple, std.fmt.comptimePrint("{}", .{key_index})) = field.name;
-        // field vale
-        const field_value = blk: {
-            const field_value = @field(value, field.name);
+        // field name <-> value tuple
+        const field_name, const field_value = blk: {
+            const field_value = @field(active_field, field.name);
             const type_info = @typeInfo(field.type);
             break :blk if (type_info == .@"enum")
-                @intFromEnum(field_value)
+                .{ field.name, @intFromEnum(field_value) }
             else if (type_info == .@"struct" and type_info.@"struct".layout == .@"packed")
-                @as(type_info.@"struct".backing_integer.?, @bitCast(field_value))
-            else
-                field_value;
+                .{ field.name, @as(type_info.@"struct".backing_integer.?, @bitCast(field_value)) }
+            else if (type_info == .@"union") {
+                const active_field_name = @tagName(std.meta.activeTag(field_value));
+                const active_value = @field(field_value, active_field_name);
+                break :blk .{ active_field_name, active_value };
+            } else .{ field.name, field_value };
         };
 
+        // field name
+        @field(tuple, std.fmt.comptimePrint("{}", .{key_index})) = field_name;
         @field(tuple, std.fmt.comptimePrint("{}", .{value_index})) = field_value;
     }
 
@@ -99,27 +128,69 @@ fn flatTuple(comptime T: type, value: T) StructToFlatTuple(T, value) {
 }
 
 test flatTuple {
-    const Person = struct {
-        name: []const u8,
-        age: ?u32 = 42,
-        gender: enum { male, female },
-        wealth: packed struct(u32) { rich: u24, poor: u8 },
-        favorite_food: ?[]const u8 = null,
-        status: union(enum) { married: []const u8, single: bool },
-    };
+    comptime {
+        const Entity = union(enum) {
+            person: struct {
+                name: []const u8,
+                age: ?u32 = 42,
+                gender: enum { male, female },
+                wealth: packed struct(u32) { rich: u24, poor: u8 },
+                favorite_food: ?[]const u8 = null,
+                status: union(enum) { married: []const u8, single: bool },
+            },
+        };
+        const entity: Entity = .{
+            .person = .{
+                .name = "Alice",
+                .gender = .male,
+                .wealth = .{
+                    .rich = 7,
+                    .poor = 0,
+                },
+                .status = .{
+                    .married = "happily",
+                },
+            },
+        };
 
-    const person: Person = .{
-        .name = "Alice",
-        .gender = .male,
-        .wealth = .{ .rich = 7, .poor = 0 },
-        .status = .{ .married = "happily" },
-    };
-    const flat_tuple = comptime flatTuple(Person, person);
-    try std.testing.expectEqual(.{
-        "name",   "Alice",
-        "age",    42,
-        "gender", 0,
-        "wealth", 7, //
-        null,
-    }, flat_tuple);
+        const flat_tuple = flatTuple(entity);
+        try std.testing.expectEqualDeep(.{
+            "name",    "Alice",
+            "age",     42,
+            "gender",  0,
+            "wealth",  7,
+            "married", "happily",
+            null,
+        }, flat_tuple);
+    }
+    {
+        const Person = struct {
+            name: []const u8,
+            age: ?u32 = 42,
+            gender: enum { male, female },
+            wealth: packed struct(u32) { rich: u24, poor: u8 },
+            favorite_food: ?[]const u8 = null,
+            status: union(enum) { married: []const u8, single: bool },
+        };
+        const person: Person = .{
+            .name = "Alice",
+            .gender = .male,
+            .wealth = .{
+                .rich = 7,
+                .poor = 0,
+            },
+            .status = .{
+                .married = "happily",
+            },
+        };
+        const flat_tuple = comptime flatTuple(person);
+        try std.testing.expectEqualDeep(.{
+            "name",    "Alice",
+            "age",     42,
+            "gender",  0,
+            "wealth",  7,
+            "married", "happily",
+            null,
+        }, flat_tuple);
+    }
 }
