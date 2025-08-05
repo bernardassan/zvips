@@ -57,7 +57,6 @@ pub fn build(b: *Build) void {
     const autodoc = b.addObject(.{
         .name = "zvips",
         .root_module = mod,
-        .optimize = .Debug,
         .max_rss = if (is(.wsl)) rss("95MiB") else if (is(.ubuntu)) rss("295MiB") else rss("110MiB"),
         .use_lld = lld,
         .use_llvm = llvm,

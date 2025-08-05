@@ -6,6 +6,7 @@ const Lib = union(enum) {
     lazy: Build.LazyPath,
 };
 
+// zig build run -Dno-bin -fincremental --watch -freference-trace=6 -- ../assets/image.avif
 pub fn build(b: *Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
@@ -15,7 +16,8 @@ pub fn build(b: *Build) void {
         else => false,
     };
 
-    const llvm = false;
+    // https://github.com/ziglang/zig/issues/24280
+    const llvm = true;
     const lld = false;
     const strip = false;
     const lto = lld;
