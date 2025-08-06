@@ -2,6 +2,7 @@ const std = @import("std");
 const c = @import("root.zig").c;
 const debug = std.debug;
 const process = std.process;
+const testing = std.testing;
 
 const Heif = struct {
     const Load = struct {
@@ -104,139 +105,212 @@ pub const Load = union(enum) {
 
     /// caller owns memory and must free/reset when done
     pub fn toString(self: Load, fba: std.mem.Allocator) ![]const u8 {
-        const char_count = 128; //random number bump if limit is hit
-        var options = try std.ArrayList(u8).initCapacity(fba, char_count);
-        options.appendAssumeCapacity('[');
+        // currently maximum option slice is 141
+        const char_count = 192;
+        var buf: [char_count]u8 = undefined;
 
-        var writer = options.writer();
+        var options: std.Io.Writer = .fixed(&buf);
+        try options.writeByte('[');
 
         switch (self) {
             .heif => |heif_options| {
                 if (heif_options.page) |page| {
                     const min_page, const max_page = .{ 0, 100000 };
                     debug.assert(page >= min_page and page <= max_page);
-                    try writer.print("page={}", .{page});
-                    try writer.writeByte(',');
-                } else if (heif_options.n) |page_n| {
+                    try options.print("page={}", .{page});
+                    try options.writeByte(',');
+                }
+                if (heif_options.n) |page_n| {
                     const min_page_n, const max_page_n = .{ -1, 100000 };
                     debug.assert(page_n >= min_page_n and page_n <= max_page_n);
-                    try writer.print("n={}", .{page_n});
-                    try writer.writeByte(',');
-                } else if (heif_options.thumbnail) |thumbnail| {
-                    try writer.print("thumbnail={}", .{thumbnail});
-                    try writer.writeByte(',');
-                } else if (heif_options.unlimited) |unlimited| {
-                    try writer.print("unlimited={}", .{unlimited});
-                    try writer.writeByte(',');
-                } else if (heif_options.flags) |flags| {
+                    try options.print("n={}", .{page_n});
+                    try options.writeByte(',');
+                }
+                if (heif_options.thumbnail) |thumbnail| {
+                    try options.print("thumbnail={}", .{thumbnail});
+                    try options.writeByte(',');
+                }
+                if (heif_options.unlimited) |unlimited| {
+                    try options.print("unlimited={}", .{unlimited});
+                    try options.writeByte(',');
+                }
+                if (heif_options.flags) |flags| {
                     _ = flags;
                     process.fatal("TODO: how to get ForeignFlags output", .{});
-                } else if (heif_options.memory) |memory| {
-                    try writer.print("memory={}", .{memory});
-                    try writer.writeByte(',');
-                } else if (heif_options.access) |access| {
-                    try writer.print("access={s}", .{@tagName(access)});
-                    try writer.writeByte(',');
-                } else if (heif_options.@"fail-on") |fail_on| {
-                    try writer.print("fail-on={s}", .{@tagName(fail_on)});
-                    try writer.writeByte(',');
-                } else if (heif_options.revalidate) |revalidate| {
-                    try writer.print("revalidate={}", .{revalidate});
-                    try writer.writeByte(',');
+                }
+                if (heif_options.memory) |memory| {
+                    try options.print("memory={}", .{memory});
+                    try options.writeByte(',');
+                }
+                if (heif_options.access) |access| {
+                    try options.print("access={s}", .{@tagName(access)});
+                    try options.writeByte(',');
+                }
+                if (heif_options.@"fail-on") |fail_on| {
+                    try options.print("fail-on={s}", .{@tagName(fail_on)});
+                    try options.writeByte(',');
+                }
+                if (heif_options.revalidate) |revalidate| {
+                    try options.print("revalidate={}", .{revalidate});
+                    try options.writeByte(',');
                 }
             },
         }
         // replace last ',' with ']'
-        if (options.items[options.items.len - 1] == ',') {
-            options.replaceRangeAssumeCapacity(options.items.len - 1, 1, "]");
+        const writtern_options = options.buffered();
+        if (writtern_options[writtern_options.len - 1] == ',') {
+            writtern_options[writtern_options.len - 1] = ']';
         } else {
-            options.appendAssumeCapacity(']');
+            try options.writeByte(']');
         }
-        return try options.toOwnedSlice();
+
+        return try fba.dupe(u8, options.buffered());
     }
 };
+
+test Load {
+    const allocator = testing.allocator;
+
+    const avif: Heif.Load = .{
+        .@"fail-on" = .warning,
+        .access = .sequential,
+        .flags = null,
+        .memory = true,
+        .n = -1,
+        .page = 3,
+        .revalidate = true,
+        .thumbnail = true,
+        .unlimited = true,
+    };
+    const load_avif: Load = .{ .heif = avif };
+
+    const loaded_options = try load_avif.toString(allocator);
+    defer allocator.free(loaded_options);
+
+    const expect_options = "[page=3,n=-1,thumbnail=true,unlimited=true,memory=true,access=sequential,fail-on=warning,revalidate=true]";
+
+    try testing.expectEqualStrings(expect_options, loaded_options);
+}
 
 pub const Save = union(enum) {
     heif: Heif.Save,
 
     /// caller owns memory and must free/reset when done
     pub fn toString(self: Save, fba: std.mem.Allocator) ![]const u8 {
-        const char_count = 128; //random number bump if limit is hit
-        var options = try std.ArrayList(u8).initCapacity(fba, char_count);
-        options.appendAssumeCapacity('[');
+        // currently maximum option slice is 141
+        const char_count = 192;
+        var buf: [char_count]u8 = undefined;
 
-        var writer = options.writer();
+        var options: std.Io.Writer = .fixed(&buf);
+        try options.writeByte('[');
 
         switch (self) {
             .heif => |heif_save| {
                 if (heif_save.Q) |Q| {
                     const min_q, const max_q = .{ 1, 100 };
                     debug.assert(Q >= min_q and Q <= max_q);
-                    try writer.print("Q={}", .{Q});
-                    try writer.writeByte(',');
-                } else if (heif_save.bitdepth) |bitdepth| {
+                    try options.print("Q={}", .{Q});
+                    try options.writeByte(',');
+                }
+                if (heif_save.bitdepth) |bitdepth| {
                     const min_depth, const max_depth = .{ 8, 12 };
                     debug.assert(bitdepth >= min_depth and bitdepth <= max_depth);
-                    try writer.print("bitdepth={}", .{bitdepth});
-                    try writer.writeByte(',');
-                } else if (heif_save.lossless) |lossless| {
-                    try writer.print("lossless={}", .{lossless});
-                    try writer.writeByte(',');
-                } else if (heif_save.compression) |compression| {
-                    try writer.print("compression={s}", .{@tagName(compression)});
-                    try writer.writeByte(',');
-                } else if (heif_save.effort) |effort| {
+                    try options.print("bitdepth={}", .{bitdepth});
+                    try options.writeByte(',');
+                }
+                if (heif_save.lossless) |lossless| {
+                    try options.print("lossless={}", .{lossless});
+                    try options.writeByte(',');
+                }
+                if (heif_save.compression) |compression| {
+                    try options.print("compression={s}", .{@tagName(compression)});
+                    try options.writeByte(',');
+                }
+                if (heif_save.effort) |effort| {
                     const min_effort, const max_effort = .{ 0, 9 };
                     debug.assert(effort >= min_effort and effort <= max_effort);
-                    try writer.print("effort={}", .{effort});
-                    try writer.writeByte(',');
-                } else if (heif_save.@"subsample-mode") |subsample_mode| {
-                    try writer.print("subsample-mode={s}", .{@tagName(subsample_mode)});
-                    try writer.writeByte(',');
-                } else if (heif_save.encoder) |encoder| {
-                    try writer.print("encoder={s}", .{@tagName(encoder)});
-                    try writer.writeByte(',');
-                } else if (heif_save.keep) |keep| {
-                    try writer.print("keep=", .{});
+                    try options.print("effort={}", .{effort});
+                    try options.writeByte(',');
+                }
+                if (heif_save.@"subsample-mode") |subsample_mode| {
+                    try options.print("subsample-mode={s}", .{@tagName(subsample_mode)});
+                    try options.writeByte(',');
+                }
+                if (heif_save.encoder) |encoder| {
+                    try options.print("encoder={s}", .{@tagName(encoder)});
+                    try options.writeByte(',');
+                }
+                if (heif_save.keep) |keep| {
+                    try options.print("keep=", .{});
 
                     if (keep.exif) {
-                        try writer.print("exif:", .{});
+                        try options.print("exif:", .{});
                     }
                     if (keep.xmp) {
-                        try writer.print("xmp:", .{});
+                        try options.print("xmp:", .{});
                     }
                     if (keep.iptc) {
-                        try writer.print("iptc:", .{});
+                        try options.print("iptc:", .{});
                     }
                     if (keep.icc) {
-                        try writer.print("icc:", .{});
+                        try options.print("icc:", .{});
                     }
                     if (keep.other) {
-                        try writer.print("other", .{});
+                        try options.print("other", .{});
                     }
 
-                    try writer.writeByte(',');
-                } else if (heif_save.background) |background| {
+                    try options.writeByte(',');
+                }
+                if (heif_save.background) |background| {
                     _ = background;
                     process.fatal("TODO: how to format ArrayDouble\nMaybe use native slice of doubles", .{});
                 } else if (heif_save.@"page-height") |page_height| {
                     const page_min, const page_max = .{ 0, 100000000 };
                     debug.assert(page_height >= page_min and page_height <= page_max);
-                    try writer.print("page-height={}", .{page_height});
-                    try writer.writeByte(',');
-                } else if (heif_save.profile) |profile| {
-                    try writer.print("profile={s}", .{profile});
-                    try writer.writeByte(',');
+                    try options.print("page-height={}", .{page_height});
+                    try options.writeByte(',');
+                }
+                if (heif_save.profile) |profile| {
+                    try options.print("profile={s}", .{profile});
+                    try options.writeByte(',');
                 }
             },
         }
 
         // replace last ',' with ']'
-        if (options.items[options.items.len - 1] == ',') {
-            options.replaceRangeAssumeCapacity(options.items.len - 1, 1, "]");
+        const writtern_options = options.buffered();
+        if (writtern_options[writtern_options.len - 1] == ',') {
+            writtern_options[writtern_options.len - 1] = ']';
         } else {
-            options.appendAssumeCapacity(']');
+            try options.writeByte(']');
         }
-        return try options.toOwnedSlice();
+
+        return try fba.dupe(u8, options.buffered());
     }
 };
+
+test Save {
+    const allocator = testing.allocator;
+
+    const avif: Heif.Save = .{
+        .@"page-height" = 100_000_000,
+        .@"subsample-mode" = .on,
+        .Q = 100,
+        .background = null,
+        .bitdepth = 12,
+        .compression = .av1,
+        .effort = 9,
+        .encoder = .rav1e,
+        .keep = .flags_all,
+        .lossless = true,
+        .profile = null,
+    };
+    const save_avif: Save = .{ .heif = avif };
+
+    const options = try save_avif.toString(allocator);
+    defer allocator.free(options);
+
+    const expect = "[Q=100,bitdepth=12,lossless=true,compression=av1,effort=9,subsample-mode=on,encoder=rav1e,keep=exif:xmp:iptc:icc:other,page-height=100000000]";
+
+    try testing.expectEqualStrings(expect, options);
+}

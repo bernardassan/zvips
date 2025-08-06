@@ -51,6 +51,13 @@ pub fn build(b: *Build) void {
     zvips.pie = llvm;
     zvips.want_lto = lto;
 
+    const tests = b.addTest(.{
+        .root_module = mod,
+    });
+    const run_tests = b.addRunArtifact(tests);
+    const test_step = b.step("test", "Run tests");
+    test_step.dependOn(&run_tests.step);
+
     const fmt_dirs: []const []const u8 = &.{ "bindings", "lib", "examples" };
     fmt.dependOn(&b.addFmt(.{ .paths = fmt_dirs }).step);
 

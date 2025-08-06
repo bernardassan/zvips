@@ -86,3 +86,7 @@ fn vipsWarningHandler(domain: ?[*:0]const u8, level: c.glib.LogLevelFlags, messa
         c.glib.logDefaultHandler(domain, level, message, user_data);
     }
 }
+
+test {
+    _ = Options;
+}
