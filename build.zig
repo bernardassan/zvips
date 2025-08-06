@@ -21,6 +21,7 @@ pub fn build(b: *Build) void {
 
     const fmt = b.step("fmt", "Modify source files in place to have conforming formatting");
     const docs = b.step("docs", "Build and install the library documentation");
+    const tests = b.step("test", "Run tests");
 
     const vips = b.dependency("libvips", .{
         .target = target,
@@ -51,33 +52,43 @@ pub fn build(b: *Build) void {
     zvips.pie = llvm;
     zvips.want_lto = lto;
 
-    const tests = b.addTest(.{
-        .root_module = mod,
+    tests.dependOn(step: {
+        const tests_ = b.addTest(.{
+            .root_module = mod,
+        });
+        const run_tests = b.addRunArtifact(tests_);
+        break :step &run_tests.step;
     });
-    const run_tests = b.addRunArtifact(tests);
-    const test_step = b.step("test", "Run tests");
-    test_step.dependOn(&run_tests.step);
 
-    const fmt_dirs: []const []const u8 = &.{ "bindings", "lib", "examples" };
-    fmt.dependOn(&b.addFmt(.{ .paths = fmt_dirs }).step);
-
-    const autodoc = b.addObject(.{
-        .name = "zvips",
-        .root_module = mod,
-        .max_rss = if (is(.wsl)) rss("95MiB") else if (is(.ubuntu)) rss("295MiB") else rss("110MiB"),
-        .use_lld = lld,
-        .use_llvm = llvm,
+    fmt.dependOn(step: {
+        const fmt_dirs: []const []const u8 = &.{
+            "bindings",
+            "lib",
+            "examples",
+        };
+        const fmt_ = b.addFmt(.{ .paths = fmt_dirs });
+        break :step &fmt_.step;
     });
-    autodoc.pie = llvm;
-    autodoc.want_lto = lto;
 
-    const install_docs = b.addInstallDirectory(.{
-        .source_dir = autodoc.getEmittedDocs(),
-        .install_dir = .prefix,
-        .install_subdir = "docs",
+    docs.dependOn(step: {
+        const autodoc = b.addObject(.{
+            .name = "zvips",
+            .root_module = mod,
+            .max_rss = if (is(.wsl)) rss("95MiB") else if (is(.ubuntu)) rss("295MiB") else rss("110MiB"),
+            .use_lld = lld,
+            .use_llvm = llvm,
+        });
+        autodoc.pie = llvm;
+        autodoc.want_lto = lto;
+
+        const install_docs = b.addInstallDirectory(.{
+            .source_dir = autodoc.getEmittedDocs(),
+            .install_dir = .prefix,
+            .install_subdir = "docs",
+        });
+        install_docs.step.name = "install generated docs to zig-out/docs";
+        break :step &install_docs.step;
     });
-    install_docs.step.name = "install generated docs to zig-out/docs";
-    docs.dependOn(&install_docs.step);
 
     if (no_bin) {
         const vips_path = zvips.getEmittedBin();
