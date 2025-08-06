@@ -106,8 +106,8 @@ pub const Load = union(enum) {
     /// caller owns memory and must free/reset when done
     pub fn toString(self: Load, fba: std.mem.Allocator) ![]const u8 {
         // currently maximum option slice is 141
-        const char_count = 192;
-        var buf: [char_count]u8 = undefined;
+        const max_char_count = 192;
+        var buf: [max_char_count]u8 = undefined;
 
         var options: std.Io.Writer = .fixed(&buf);
         try options.writeByte('[');
@@ -198,8 +198,8 @@ pub const Save = union(enum) {
     /// caller owns memory and must free/reset when done
     pub fn toString(self: Save, fba: std.mem.Allocator) ![]const u8 {
         // currently maximum option slice is 141
-        const char_count = 192;
-        var buf: [char_count]u8 = undefined;
+        const max_char_count = 192;
+        var buf: [max_char_count]u8 = undefined;
 
         var options: std.Io.Writer = .fixed(&buf);
         try options.writeByte('[');
