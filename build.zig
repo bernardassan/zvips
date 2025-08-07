@@ -7,7 +7,20 @@ comptime {
     checkVersion();
 }
 
+const Env = enum {
+    dev,
+    release,
+};
+
 pub fn build(b: *Build) void {
+    const env: Env = dev: {
+        const stat = std.fs.cwd().statFile(".gitattributes") catch |err| switch (err) {
+            error.FileNotFound => break :dev .release,
+            else => unreachable,
+        };
+        break :dev if (stat.kind == .file) .dev else .release;
+    };
+
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
@@ -61,10 +74,13 @@ pub fn build(b: *Build) void {
     });
 
     fmt.dependOn(step: {
-        const fmt_dirs: []const []const u8 = &.{
+        const fmt_dirs: []const []const u8 = if (env == .dev) &.{
             "bindings",
             "lib",
             "examples",
+        } else &.{
+            "bindings",
+            "lib",
         };
         const fmt_ = b.addFmt(.{ .paths = fmt_dirs });
         break :step &fmt_.step;

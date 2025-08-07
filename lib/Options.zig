@@ -199,9 +199,10 @@ pub const Save = union(enum) {
     pub fn toString(self: Save, fba: std.mem.Allocator) ![]const u8 {
         // currently maximum option slice is 141
         const max_char_count = 192;
-        var buf: [max_char_count]u8 = undefined;
+        var alloc_writer: std.Io.Writer.Allocating = try .initCapacity(fba, max_char_count);
+        errdefer alloc_writer.deinit();
 
-        var options: std.Io.Writer = .fixed(&buf);
+        var options = &alloc_writer.writer;
         try options.writeByte('[');
 
         switch (self) {
@@ -285,7 +286,7 @@ pub const Save = union(enum) {
             try options.writeByte(']');
         }
 
-        return try fba.dupe(u8, options.buffered());
+        return try alloc_writer.toOwnedSlice();
     }
 };
 
