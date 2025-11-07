@@ -17,7 +17,7 @@ pub const DateDay = u8;
 /// The year is represented with four digits.
 pub const DateYear = u16;
 
-/// Opaque type. See `glib.MainContext.pusherNew` for details.
+/// Opaque type. See `g_main_context_pusher_new` for details.
 pub const MainContextPusher = void;
 
 /// Opaque type. See `g_mutex_locker_new` for details.
@@ -121,31 +121,34 @@ pub const Allocator = opaque {
     }
 };
 
-/// Contains the public fields of a GArray.
+/// Contains the public fields of a `GArray`.
 pub const Array = extern struct {
     /// a pointer to the element data. The data may be moved as
-    ///     elements are added to the `glib.Array`.
+    ///     elements are added to the `GArray`.
     f_data: ?[*:0]u8,
-    /// the number of elements in the `glib.Array` not including the
-    ///     possible terminating zero element.
+    /// the number of elements in the `GArray` not including the
+    ///     possible terminating zero element
     f_len: c_uint,
 
     /// Adds `len` elements onto the end of the array.
-    extern fn g_array_append_vals(p_array: *glib.Array, p_data: *const anyopaque, p_len: c_uint) *glib.Array;
+    ///
+    /// `data` may be `NULL` if (and only if) `len` is zero. If `len` is zero, this
+    /// function is a no-op.
+    extern fn g_array_append_vals(p_array: *glib.Array, p_data: ?*const anyopaque, p_len: c_uint) *glib.Array;
     pub const appendVals = g_array_append_vals;
 
     /// Checks whether `target` exists in `array` by performing a binary
     /// search based on the given comparison function `compare_func` which
-    /// get pointers to items as arguments. If the element is found, `TRUE`
+    /// gets pointers to items as arguments. If the element is found, true
     /// is returned and the element’s index is returned in `out_match_index`
-    /// (if non-`NULL`). Otherwise, `FALSE` is returned and `out_match_index`
-    /// is undefined. If `target` exists multiple times in `array`, the index
-    /// of the first instance is returned. This search is using a binary
-    /// search, so the `array` must absolutely be sorted to return a correct
-    /// result (if not, the function may produce false-negative).
+    /// (if non-`NULL`). Otherwise, false is returned and `out_match_index`
+    /// is undefined. This search is using a binary search, so the `array` must
+    /// absolutely be sorted to return a correct result (if not, the function may
+    /// produce false-negative).
     ///
-    /// This example defines a comparison function and search an element in a `glib.Array`:
-    /// ```
+    /// This example defines a comparison function and searches an element in a
+    /// `GArray`:
+    /// ```c
     /// static gint
     /// cmpint (gconstpointer a, gconstpointer b)
     /// {
@@ -163,25 +166,25 @@ pub const Array = extern struct {
     extern fn g_array_binary_search(p_array: *glib.Array, p_target: ?*const anyopaque, p_compare_func: glib.CompareFunc, p_out_match_index: ?*c_uint) c_int;
     pub const binarySearch = g_array_binary_search;
 
-    /// Create a shallow copy of a `glib.Array`. If the array elements consist of
+    /// Creates a shallow copy of a `glib.Array`. If the array elements consist of
     /// pointers to data, the pointers are copied but the actual data is not.
     extern fn g_array_copy(p_array: *glib.Array) *glib.Array;
     pub const copy = g_array_copy;
 
-    /// Frees the memory allocated for the `glib.Array`. If `free_segment` is
-    /// `TRUE` it frees the memory block holding the elements as well. Pass
-    /// `FALSE` if you want to free the `glib.Array` wrapper but preserve the
+    /// Frees the memory allocated for the `GArray`. If `free_segment` is
+    /// true it frees the memory block holding the elements as well. Pass
+    /// false if you want to free the `GArray` wrapper but preserve the
     /// underlying array for use elsewhere. If the reference count of
-    /// `array` is greater than one, the `glib.Array` wrapper is preserved but
-    /// the size of  `array` will be set to zero.
+    /// `array` is greater than one, the `GArray` wrapper is preserved but
+    /// the size of `array` will be set to zero.
     ///
     /// If array contents point to dynamically-allocated memory, they should
-    /// be freed separately if `free_segment` is `TRUE` and no `clear_func`
+    /// be freed separately if `free_segment` is true and no `clear_func`
     /// function has been set for `array`.
     ///
-    /// This function is not thread-safe. If using a `glib.Array` from multiple
-    /// threads, use only the atomic `glib.Array.ref` and `glib.Array.unref`
-    /// functions.
+    /// This function is not thread-safe. If using a `GArray` from multiple
+    /// threads, use only the atomic `glib.Array.ref` and
+    /// `glib.Array.unref` functions.
     extern fn g_array_free(p_array: *glib.Array, p_free_segment: c_int) [*:0]u8;
     pub const free = g_array_free;
 
@@ -189,7 +192,7 @@ pub const Array = extern struct {
     extern fn g_array_get_element_size(p_array: *glib.Array) c_uint;
     pub const getElementSize = g_array_get_element_size;
 
-    /// Inserts `len` elements into a `glib.Array` at the given index.
+    /// Inserts `len` elements into a `GArray` at the given index.
     ///
     /// If `index_` is greater than the array’s current length, the array is expanded.
     /// The elements between the old end of the array and the newly inserted elements
@@ -205,35 +208,35 @@ pub const Array = extern struct {
     extern fn g_array_insert_vals(p_array: *glib.Array, p_index_: c_uint, p_data: ?*const anyopaque, p_len: c_uint) *glib.Array;
     pub const insertVals = g_array_insert_vals;
 
-    /// Creates a new `glib.Array` with a reference count of 1.
+    /// Creates a new `GArray` with a reference count of 1.
     extern fn g_array_new(p_zero_terminated: c_int, p_clear_: c_int, p_element_size: c_uint) *glib.Array;
     pub const new = g_array_new;
 
-    /// Creates a new `glib.Array` with `data` as array data, `len` as length and a
+    /// Creates a new `GArray` with `data` as array data, `len` as length and a
     /// reference count of 1.
     ///
     /// This avoids having to copy the data manually, when it can just be
     /// inherited.
-    /// After this call, `data` belongs to the `glib.Array` and may no longer be
+    /// After this call, `data` belongs to the `GArray` and may no longer be
     /// modified by the caller. The memory of `data` has to be dynamically
     /// allocated and will eventually be freed with `glib.free`.
     ///
     /// In case the elements need to be cleared when the array is freed, use
-    /// `glib.Array.setClearFunc` to set a `glib.DestroyNotify` function to perform
-    /// such task.
+    /// `glib.Array.setClearFunc` to set a `glib.DestroyNotify`
+    /// function to perform such task.
     ///
-    /// Do not use it if `len` or `element_size` are greater than `G_MAXUINT`.
-    /// `glib.Array` stores the length of its data in `guint`, which may be shorter
-    /// than `gsize`.
+    /// Do not use it if `len` or `element_size` are greater than
+    ///  [`G_MAXUINT`](types.html`guint`). `GArray` stores the length of its data in
+    ///  `guint`, which may be shorter than `gsize`.
     extern fn g_array_new_take(p_data: ?[*]*anyopaque, p_len: usize, p_clear: c_int, p_element_size: usize) *glib.Array;
     pub const newTake = g_array_new_take;
 
-    /// Creates a new `glib.Array` with `data` as array data, computing the length of it
+    /// Creates a new `GArray` with `data` as array data, computing the length of it
     /// and setting the reference count to 1.
     ///
     /// This avoids having to copy the data manually, when it can just be
     /// inherited.
-    /// After this call, `data` belongs to the `glib.Array` and may no longer be
+    /// After this call, `data` belongs to the `GArray` and may no longer be
     /// modified by the caller. The memory of `data` has to be dynamically
     /// allocated and will eventually be freed with `glib.free`.
     ///
@@ -241,13 +244,13 @@ pub const Array = extern struct {
     /// element is found.
     ///
     /// In case the elements need to be cleared when the array is freed, use
-    /// `glib.Array.setClearFunc` to set a `glib.DestroyNotify` function to perform
-    /// such task.
+    /// `glib.Array.setClearFunc` to set a `glib.DestroyNotify`
+    /// function to perform such task.
     ///
-    /// Do not use it if `data` length or `element_size` are greater than `G_MAXUINT`.
-    /// `glib.Array` stores the length of its data in `guint`, which may be shorter
-    /// than `gsize`.
-    extern fn g_array_new_take_zero_terminated(p_data: [*]*anyopaque, p_clear: c_int, p_element_size: usize) *glib.Array;
+    /// Do not use it if `data` length or `element_size` are greater than
+    /// [`G_MAXUINT`](types.html`guint`). `GArray` stores the length of its data in
+    /// `guint`, which may be shorter than `gsize`.
+    extern fn g_array_new_take_zero_terminated(p_data: ?[*]*anyopaque, p_clear: c_int, p_element_size: usize) *glib.Array;
     pub const newTakeZeroTerminated = g_array_new_take_zero_terminated;
 
     /// Adds `len` elements onto the start of the array.
@@ -266,20 +269,20 @@ pub const Array = extern struct {
     extern fn g_array_ref(p_array: *glib.Array) *glib.Array;
     pub const ref = g_array_ref;
 
-    /// Removes the element at the given index from a `glib.Array`. The following
+    /// Removes the element at the given index from a `GArray`. The following
     /// elements are moved down one place.
     extern fn g_array_remove_index(p_array: *glib.Array, p_index_: c_uint) *glib.Array;
     pub const removeIndex = g_array_remove_index;
 
-    /// Removes the element at the given index from a `glib.Array`. The last
+    /// Removes the element at the given index from a `GArray`. The last
     /// element in the array is used to fill in the space, so this function
-    /// does not preserve the order of the `glib.Array`. But it is faster than
+    /// does not preserve the order of the `GArray`. But it is faster than
     /// `glib.Array.removeIndex`.
     extern fn g_array_remove_index_fast(p_array: *glib.Array, p_index_: c_uint) *glib.Array;
     pub const removeIndexFast = g_array_remove_index_fast;
 
     /// Removes the given number of elements starting at the given index
-    /// from a `glib.Array`.  The following elements are moved to close the gap.
+    /// from a `GArray`. The following elements are moved to close the gap.
     extern fn g_array_remove_range(p_array: *glib.Array, p_index_: c_uint, p_length: c_uint) *glib.Array;
     pub const removeRange = g_array_remove_range;
 
@@ -294,7 +297,7 @@ pub const Array = extern struct {
     /// functions, `clear_func` is expected to clear the contents of
     /// the array element it is given, but not free the element itself.
     ///
-    /// ```
+    /// ```c
     /// typedef struct
     /// {
     ///   gchar *str;
@@ -314,22 +317,22 @@ pub const Array = extern struct {
     /// // assign data to the structure
     /// g_array_free (garray, TRUE);
     /// ```
-    extern fn g_array_set_clear_func(p_array: *glib.Array, p_clear_func: glib.DestroyNotify) void;
+    extern fn g_array_set_clear_func(p_array: *glib.Array, p_clear_func: ?glib.DestroyNotify) void;
     pub const setClearFunc = g_array_set_clear_func;
 
     /// Sets the size of the array, expanding it if necessary. If the array
-    /// was created with `clear_` set to `TRUE`, the new elements are set to 0.
+    /// was created with `clear_` set to true, the new elements are set to 0.
     extern fn g_array_set_size(p_array: *glib.Array, p_length: c_uint) *glib.Array;
     pub const setSize = g_array_set_size;
 
-    /// Creates a new `glib.Array` with `reserved_size` elements preallocated and
+    /// Creates a new `GArray` with `reserved_size` elements preallocated and
     /// a reference count of 1. This avoids frequent reallocation, if you
     /// are going to add many elements to the array. Note however that the
     /// size of the array is still 0.
     extern fn g_array_sized_new(p_zero_terminated: c_int, p_clear_: c_int, p_element_size: c_uint, p_reserved_size: c_uint) *glib.Array;
     pub const sizedNew = g_array_sized_new;
 
-    /// Sorts a `glib.Array` using `compare_func` which should be a `qsort`-style
+    /// Sorts a `GArray` using `compare_func` which should be a ``qsort``-style
     /// comparison function (returns less than zero for first arg is less
     /// than second arg, zero for equal, greater zero if first arg is
     /// greater than second arg).
@@ -353,14 +356,15 @@ pub const Array = extern struct {
     /// the underlying array is preserved for use elsewhere and returned
     /// to the caller.
     ///
-    /// If the array was created with the `zero_terminate` property
-    /// set to `TRUE`, the returned data is zero terminated too.
+    /// Note that if the array was created with the `zero_terminate`
+    /// property set to true, this may still return `NULL` if the length
+    /// of the array was zero and data was not yet allocated.
     ///
     /// If array elements contain dynamically-allocated memory,
     /// the array elements should also be freed by the caller.
     ///
     /// A short example of use:
-    /// ```
+    /// ```c
     /// ...
     /// gpointer data;
     /// gsize data_len;
@@ -372,7 +376,7 @@ pub const Array = extern struct {
 
     /// Atomically decrements the reference count of `array` by one. If the
     /// reference count drops to 0, the effect is the same as calling
-    /// `glib.Array.free` with `free_segment` set to `TRUE`. This function is
+    /// `glib.Array.free` with `free_segment` set to true. This function is
     /// thread-safe and may be called from any thread.
     extern fn g_array_unref(p_array: *glib.Array) void;
     pub const unref = g_array_unref;
@@ -438,14 +442,14 @@ pub const AsyncQueue = opaque {
 
     /// Pops data from the `queue`. If `queue` is empty, this function
     /// blocks until data becomes available.
-    extern fn g_async_queue_pop(p_queue: *AsyncQueue) ?*anyopaque;
+    extern fn g_async_queue_pop(p_queue: *AsyncQueue) *anyopaque;
     pub const pop = g_async_queue_pop;
 
     /// Pops data from the `queue`. If `queue` is empty, this function
     /// blocks until data becomes available.
     ///
     /// This function must be called while holding the `queue`'s lock.
-    extern fn g_async_queue_pop_unlocked(p_queue: *AsyncQueue) ?*anyopaque;
+    extern fn g_async_queue_pop_unlocked(p_queue: *AsyncQueue) *anyopaque;
     pub const popUnlocked = g_async_queue_pop_unlocked;
 
     /// Pushes the `data` into the `queue`.
@@ -498,7 +502,7 @@ pub const AsyncQueue = opaque {
     /// This function must be called while holding the `queue`'s lock.
     ///
     /// For an example of `func` see `glib.AsyncQueue.sort`.
-    extern fn g_async_queue_push_sorted_unlocked(p_queue: *AsyncQueue, p_data: ?*anyopaque, p_func: glib.CompareDataFunc, p_user_data: ?*anyopaque) void;
+    extern fn g_async_queue_push_sorted_unlocked(p_queue: *AsyncQueue, p_data: *anyopaque, p_func: glib.CompareDataFunc, p_user_data: ?*anyopaque) void;
     pub const pushSortedUnlocked = g_async_queue_push_sorted_unlocked;
 
     /// Pushes the `data` into the `queue`.
@@ -525,7 +529,7 @@ pub const AsyncQueue = opaque {
     /// Remove an item from the queue.
     ///
     /// This function must be called while holding the `queue`'s lock.
-    extern fn g_async_queue_remove_unlocked(p_queue: *AsyncQueue, p_item: ?*anyopaque) c_int;
+    extern fn g_async_queue_remove_unlocked(p_queue: *AsyncQueue, p_item: *anyopaque) c_int;
     pub const removeUnlocked = g_async_queue_remove_unlocked;
 
     /// Sorts `queue` using `func`.
@@ -1132,55 +1136,56 @@ pub const BookmarkFile = opaque {
     }
 };
 
-/// Contains the public fields of a GByteArray.
+/// Contains the public fields of a `GByteArray`.
 pub const ByteArray = extern struct {
     /// a pointer to the element data. The data may be moved as
-    ///     elements are added to the `glib.ByteArray`
+    ///     elements are added to the `GByteArray`
     f_data: ?*u8,
-    /// the number of elements in the `glib.ByteArray`
+    /// the number of elements in the `GByteArray`
     f_len: c_uint,
 
-    /// Adds the given bytes to the end of the `glib.ByteArray`.
+    /// Adds the given bytes to the end of the `GByteArray`.
     /// The array will grow in size automatically if necessary.
-    extern fn g_byte_array_append(p_array: *glib.ByteArray, p_data: *const u8, p_len: c_uint) *glib.ByteArray;
+    extern fn g_byte_array_append(p_array: *glib.ByteArray, p_data: [*]const u8, p_len: c_uint) *glib.ByteArray;
     pub const append = g_byte_array_append;
 
-    /// Frees the memory allocated by the `glib.ByteArray`. If `free_segment` is
-    /// `TRUE` it frees the actual byte data. If the reference count of
-    /// `array` is greater than one, the `glib.ByteArray` wrapper is preserved but
+    /// Frees the memory allocated by the `GByteArray`. If `free_segment` is
+    /// true it frees the actual byte data. If the reference count of
+    /// `array` is greater than one, the `GByteArray` wrapper is preserved but
     /// the size of `array` will be set to zero.
-    extern fn g_byte_array_free(p_array: *glib.ByteArray, p_free_segment: c_int) *u8;
+    extern fn g_byte_array_free(p_array: *glib.ByteArray, p_free_segment: c_int) ?[*]u8;
     pub const free = g_byte_array_free;
 
-    /// Transfers the data from the `glib.ByteArray` into a new immutable `glib.Bytes`.
+    /// Transfers the data from the `GByteArray` into a new immutable
+    /// `glib.Bytes`.
     ///
-    /// The `glib.ByteArray` is freed unless the reference count of `array` is greater
-    /// than one, the `glib.ByteArray` wrapper is preserved but the size of `array`
-    /// will be set to zero.
+    /// The `GByteArray` is freed unless the reference count of `array` is greater
+    /// than one, in which the `GByteArray` wrapper is preserved but the size of
+    /// `array` will be set to zero.
     ///
-    /// This is identical to using `glib.Bytes.newTake` and `glib.byteArrayFree`
-    /// together.
+    /// This is identical to using `glib.Bytes.newTake` and
+    /// `glib.ByteArray.free` together.
     extern fn g_byte_array_free_to_bytes(p_array: *glib.ByteArray) *glib.Bytes;
     pub const freeToBytes = g_byte_array_free_to_bytes;
 
-    /// Creates a new `glib.ByteArray` with a reference count of 1.
+    /// Creates a new `GByteArray` with a reference count of 1.
     extern fn g_byte_array_new() *glib.ByteArray;
     pub const new = g_byte_array_new;
 
     /// Creates a byte array containing the `data`.
-    /// After this call, `data` belongs to the `glib.ByteArray` and may no longer be
+    /// After this call, `data` belongs to the `GByteArray` and may no longer be
     /// modified by the caller. The memory of `data` has to be dynamically
     /// allocated and will eventually be freed with `glib.free`.
     ///
-    /// Do not use it if `len` is greater than `G_MAXUINT`. `glib.ByteArray`
-    /// stores the length of its data in `guint`, which may be shorter than
-    /// `gsize`.
+    /// Do not use it if `len` is greater than [`G_MAXUINT`](types.html`guint`).
+    /// `GByteArray` stores the length of its data in `guint`, which may be shorter
+    /// than `gsize`.
     extern fn g_byte_array_new_take(p_data: [*]u8, p_len: usize) *glib.ByteArray;
     pub const newTake = g_byte_array_new_take;
 
-    /// Adds the given data to the start of the `glib.ByteArray`.
+    /// Adds the given data to the start of the `GByteArray`.
     /// The array will grow in size automatically if necessary.
-    extern fn g_byte_array_prepend(p_array: *glib.ByteArray, p_data: *const u8, p_len: c_uint) *glib.ByteArray;
+    extern fn g_byte_array_prepend(p_array: *glib.ByteArray, p_data: [*]const u8, p_len: c_uint) *glib.ByteArray;
     pub const prepend = g_byte_array_prepend;
 
     /// Atomically increments the reference count of `array` by one.
@@ -1188,28 +1193,28 @@ pub const ByteArray = extern struct {
     extern fn g_byte_array_ref(p_array: *glib.ByteArray) *glib.ByteArray;
     pub const ref = g_byte_array_ref;
 
-    /// Removes the byte at the given index from a `glib.ByteArray`.
+    /// Removes the byte at the given index from a `GByteArray`.
     /// The following bytes are moved down one place.
     extern fn g_byte_array_remove_index(p_array: *glib.ByteArray, p_index_: c_uint) *glib.ByteArray;
     pub const removeIndex = g_byte_array_remove_index;
 
-    /// Removes the byte at the given index from a `glib.ByteArray`. The last
+    /// Removes the byte at the given index from a `GByteArray`. The last
     /// element in the array is used to fill in the space, so this function
-    /// does not preserve the order of the `glib.ByteArray`. But it is faster
-    /// than `glib.byteArrayRemoveIndex`.
+    /// does not preserve the order of the `GByteArray`. But it is faster
+    /// than `glib.ByteArray.removeIndex`.
     extern fn g_byte_array_remove_index_fast(p_array: *glib.ByteArray, p_index_: c_uint) *glib.ByteArray;
     pub const removeIndexFast = g_byte_array_remove_index_fast;
 
     /// Removes the given number of bytes starting at the given index from a
-    /// `glib.ByteArray`.  The following elements are moved to close the gap.
+    /// `GByteArray`. The following elements are moved to close the gap.
     extern fn g_byte_array_remove_range(p_array: *glib.ByteArray, p_index_: c_uint, p_length: c_uint) *glib.ByteArray;
     pub const removeRange = g_byte_array_remove_range;
 
-    /// Sets the size of the `glib.ByteArray`, expanding it if necessary.
+    /// Sets the size of the `GByteArray`, expanding it if necessary.
     extern fn g_byte_array_set_size(p_array: *glib.ByteArray, p_length: c_uint) *glib.ByteArray;
     pub const setSize = g_byte_array_set_size;
 
-    /// Creates a new `glib.ByteArray` with `reserved_size` bytes preallocated.
+    /// Creates a new `GByteArray` with `reserved_size` bytes preallocated.
     /// This avoids frequent reallocation, if you are going to add many
     /// bytes to the array. Note however that the size of the array is still
     /// 0.
@@ -1217,7 +1222,7 @@ pub const ByteArray = extern struct {
     pub const sizedNew = g_byte_array_sized_new;
 
     /// Sorts a byte array, using `compare_func` which should be a
-    /// `qsort`-style comparison function (returns less than zero for first
+    /// ``qsort``-style comparison function (returns less than zero for first
     /// arg is less than second arg, zero for equal, greater than zero if
     /// first arg is greater than second arg).
     ///
@@ -1229,7 +1234,7 @@ pub const ByteArray = extern struct {
     extern fn g_byte_array_sort(p_array: *glib.ByteArray, p_compare_func: glib.CompareFunc) void;
     pub const sort = g_byte_array_sort;
 
-    /// Like `glib.byteArraySort`, but the comparison function takes an extra
+    /// Like `glib.ByteArray.sort`, but the comparison function takes an extra
     /// user data argument.
     extern fn g_byte_array_sort_with_data(p_array: *glib.ByteArray, p_compare_func: glib.CompareDataFunc, p_user_data: ?*anyopaque) void;
     pub const sortWithData = g_byte_array_sort_with_data;
@@ -1237,7 +1242,7 @@ pub const ByteArray = extern struct {
     /// Frees the data in the array and resets the size to zero, while
     /// the underlying array is preserved for use elsewhere and returned
     /// to the caller.
-    extern fn g_byte_array_steal(p_array: *glib.ByteArray, p_len: ?*usize) *u8;
+    extern fn g_byte_array_steal(p_array: *glib.ByteArray, p_len: ?*usize) [*]u8;
     pub const steal = g_byte_array_steal;
 
     /// Atomically decrements the reference count of `array` by one. If the
@@ -1988,6 +1993,18 @@ pub const Date = extern struct {
     extern fn g_date_get_sunday_weeks_in_year(p_year: glib.DateYear) u8;
     pub const getSundayWeeksInYear = g_date_get_sunday_weeks_in_year;
 
+    /// Calculates the number of weeks in the year.
+    ///
+    /// The result depends on which day is considered the first day of the week,
+    /// which varies by locale. `first_day_of_week` must be valid.
+    ///
+    /// The result will be either 52 or 53. Years always have 52 seven-day periods,
+    /// plus one or two extra days depending on whether it’s a leap year. This
+    /// function effectively calculates how many `first_day_of_week` days there are in
+    /// the year.
+    extern fn g_date_get_weeks_in_year(p_year: glib.DateYear, p_first_day_of_week: glib.DateWeekday) u8;
+    pub const getWeeksInYear = g_date_get_weeks_in_year;
+
     /// Returns `TRUE` if the year is a leap year.
     ///
     /// For the purposes of this function, leap year is every year
@@ -2160,6 +2177,17 @@ pub const Date = extern struct {
     /// Can return 0 if the day is before the first Sunday of the year.
     extern fn g_date_get_sunday_week_of_year(p_date: *const Date) c_uint;
     pub const getSundayWeekOfYear = g_date_get_sunday_week_of_year;
+
+    /// Calculates the week of the year during which this date falls.
+    ///
+    /// The result depends on which day is considered the first day of the week,
+    /// which varies by locale. Both `date` and `first_day_of_week` must be valid.
+    ///
+    /// If `date` is before the start of the first week of the year (for example,
+    /// before the first Monday in January if `first_day_of_week` is
+    /// `glib.@"DateWeekday.MONDAY"`) then zero will be returned.
+    extern fn g_date_get_week_of_year(p_date: *const Date, p_first_day_of_week: glib.DateWeekday) c_uint;
+    pub const getWeekOfYear = g_date_get_week_of_year;
 
     /// Returns the day of the week for a `glib.Date`. The date must be valid.
     extern fn g_date_get_weekday(p_date: *const Date) glib.DateWeekday;
@@ -4645,6 +4673,11 @@ pub const KeyFile = opaque {
     /// If both `key` and `group_name` are `NULL`, then `comment` will be
     /// written above the first group in the file.
     ///
+    /// Passing a non-existent `group_name` or `key` to this function returns
+    /// false and populates `error`. (In contrast, passing a non-existent
+    /// `group_name` or `key` to `glib.KeyFile.setString`
+    /// creates the associated group name and key.)
+    ///
     /// Note that this function prepends a `#` comment marker to
     /// each line of `comment`.
     extern fn g_key_file_set_comment(p_key_file: *KeyFile, p_group_name: ?[*:0]const u8, p_key: ?[*:0]const u8, p_comment: [*:0]const u8, p_error: ?*?*glib.Error) c_int;
@@ -5087,15 +5120,18 @@ pub const LogField = extern struct {
 /// The `GMainContext` struct is an opaque data
 /// type representing a set of sources to be handled in a main loop.
 pub const MainContext = opaque {
-    /// Returns the global-default main context. This is the main context
+    /// Returns the global-default main context.
+    ///
+    /// This is the main context
     /// used for main loop functions when a main loop is not explicitly
-    /// specified, and corresponds to the "main" main loop. See also
+    /// specified, and corresponds to the ‘main’ main loop. See also
     /// `glib.MainContext.getThreadDefault`.
     extern fn g_main_context_default() *glib.MainContext;
     pub const default = g_main_context_default;
 
-    /// Gets the thread-default `glib.MainContext` for this thread. Asynchronous
-    /// operations that want to be able to be run in contexts other than
+    /// Gets the thread-default main context for this thread.
+    ///
+    /// Asynchronous operations that want to be able to be run in contexts other than
     /// the default one should call this method or
     /// `glib.MainContext.refThreadDefault` to get a
     /// `glib.MainContext` to add their `glib.Source`s to. (Note that
@@ -5108,17 +5144,12 @@ pub const MainContext = opaque {
     extern fn g_main_context_get_thread_default() ?*glib.MainContext;
     pub const getThreadDefault = g_main_context_get_thread_default;
 
-    /// Pop `pusher`’s main context as the thread default main context.
-    /// See `glib.MainContext.pusherNew` for details.
+    /// Gets a reference to the thread-default `glib.MainContext` for this
+    /// thread
     ///
-    /// This will pop the `glib.MainContext` as the current thread-default
-    /// main context, but will not call `glib.MainContext.unref` on it.
-    extern fn g_main_context_pusher_free(p_pusher: *glib.MainContextPusher) void;
-    pub const pusherFree = g_main_context_pusher_free;
-
-    /// Gets the thread-default `glib.MainContext` for this thread, as with
-    /// `glib.MainContext.getThreadDefault`, but also adds a reference to
-    /// it with `glib.MainContext.ref`. In addition, unlike
+    /// This is the same as `glib.MainContext.getThreadDefault`, but it also
+    /// adds a reference to the returned main context with `glib.MainContext.ref`.
+    /// In addition, unlike
     /// `glib.MainContext.getThreadDefault`, if the thread-default context
     /// is the global-default context, this will return that
     /// `glib.MainContext` (with a ref added to it) rather than returning
@@ -5135,8 +5166,9 @@ pub const MainContext = opaque {
     pub const newWithFlags = g_main_context_new_with_flags;
 
     /// Tries to become the owner of the specified context.
+    ///
     /// If some other thread is the owner of the context,
-    /// returns `FALSE` immediately. Ownership is properly
+    /// returns false immediately. Ownership is properly
     /// recursive: the owner can require ownership again
     /// and will release ownership when `glib.MainContext.release`
     /// is called as many times as `glib.MainContext.acquire`.
@@ -5152,12 +5184,16 @@ pub const MainContext = opaque {
     pub const acquire = g_main_context_acquire;
 
     /// Adds a file descriptor to the set of file descriptors polled for
-    /// this context. This will very seldom be used directly. Instead
-    /// a typical event source will use `g_source_add_unix_fd` instead.
+    /// this context.
+    ///
+    /// This will very seldom be used directly. Instead
+    /// a typical event source will use ``glib.Source.addUnixFd`` instead.
     extern fn g_main_context_add_poll(p_context: ?*MainContext, p_fd: *glib.PollFD, p_priority: c_int) void;
     pub const addPoll = g_main_context_add_poll;
 
-    /// Passes the results of polling back to the main loop. You should be
+    /// Passes the results of polling back to the main loop.
+    ///
+    /// You should be
     /// careful to pass `fds` and its length `n_fds` as received from
     /// `glib.MainContext.query`, as this functions relies on assumptions
     /// on how `fds` is filled.
@@ -5180,10 +5216,11 @@ pub const MainContext = opaque {
     extern fn g_main_context_dispatch(p_context: ?*MainContext) void;
     pub const dispatch = g_main_context_dispatch;
 
-    /// Finds a source with the given source functions and user data.  If
-    /// multiple sources exist with the same source function and user data,
+    /// Finds a source with the given source functions and user data.
+    ///
+    /// If multiple sources exist with the same source function and user data,
     /// the first one found will be returned.
-    extern fn g_main_context_find_source_by_funcs_user_data(p_context: ?*MainContext, p_funcs: *glib.SourceFuncs, p_user_data: ?*anyopaque) *glib.Source;
+    extern fn g_main_context_find_source_by_funcs_user_data(p_context: ?*MainContext, p_funcs: *glib.SourceFuncs, p_user_data: ?*anyopaque) ?*glib.Source;
     pub const findSourceByFuncsUserData = g_main_context_find_source_by_funcs_user_data;
 
     /// Finds a `glib.Source` given a pair of context and ID.
@@ -5201,10 +5238,11 @@ pub const MainContext = opaque {
     extern fn g_main_context_find_source_by_id(p_context: ?*MainContext, p_source_id: c_uint) *glib.Source;
     pub const findSourceById = g_main_context_find_source_by_id;
 
-    /// Finds a source with the given user data for the callback.  If
-    /// multiple sources exist with the same user data, the first
+    /// Finds a source with the given user data for the callback.
+    ///
+    /// If multiple sources exist with the same user data, the first
     /// one found will be returned.
-    extern fn g_main_context_find_source_by_user_data(p_context: ?*MainContext, p_user_data: ?*anyopaque) *glib.Source;
+    extern fn g_main_context_find_source_by_user_data(p_context: ?*MainContext, p_user_data: ?*anyopaque) ?*glib.Source;
     pub const findSourceByUserData = g_main_context_find_source_by_user_data;
 
     /// Gets the poll function set by `glib.MainContext.setPollFunc`.
@@ -5219,8 +5257,8 @@ pub const MainContext = opaque {
     ///
     /// If `context` is owned by the current thread, `function` is called
     /// directly.  Otherwise, if `context` is the thread-default main context
-    /// of the current thread and `glib.MainContext.acquire` succeeds, then
-    /// `function` is called and `glib.MainContext.release` is called
+    /// of the current thread and `glib.MainContext.acquire` succeeds,
+    /// then `function` is called and `glib.MainContext.release` is called
     /// afterwards.
     ///
     /// In any other case, an idle source is created to call `function` and
@@ -5229,9 +5267,9 @@ pub const MainContext = opaque {
     /// priority.  If you want a different priority, use
     /// `glib.MainContext.invokeFull`.
     ///
-    /// Note that, as with normal idle functions, `function` should probably
-    /// return `FALSE`.  If it returns `TRUE`, it will be continuously run in a
-    /// loop (and may prevent this call from returning).
+    /// Note that, as with normal idle functions, `function` should probably return
+    /// `glib.SOURCE_REMOVE`.  If it returns `glib.SOURCE_CONTINUE`, it
+    /// will be continuously run in a loop (and may prevent this call from returning).
     extern fn g_main_context_invoke(p_context: ?*MainContext, p_function: glib.SourceFunc, p_data: ?*anyopaque) void;
     pub const invoke = g_main_context_invoke;
 
@@ -5240,31 +5278,35 @@ pub const MainContext = opaque {
     ///
     /// This function is the same as `glib.MainContext.invoke` except that it
     /// lets you specify the priority in case `function` ends up being
-    /// scheduled as an idle and also lets you give a `glib.DestroyNotify` for `data`.
+    /// scheduled as an idle and also lets you give a `glib.DestroyNotify`
+    /// for `data`.
     ///
-    /// `notify` should not assume that it is called from any particular
+    /// The `notify` function should not assume that it is called from any particular
     /// thread or with any particular context acquired.
     extern fn g_main_context_invoke_full(p_context: ?*MainContext, p_priority: c_int, p_function: glib.SourceFunc, p_data: ?*anyopaque, p_notify: ?glib.DestroyNotify) void;
     pub const invokeFull = g_main_context_invoke_full;
 
     /// Determines whether this thread holds the (recursive)
-    /// ownership of this `glib.MainContext`. This is useful to
+    /// ownership of this `glib.MainContext`.
+    ///
+    /// This is useful to
     /// know before waiting on another thread that may be
     /// blocking to get ownership of `context`.
     extern fn g_main_context_is_owner(p_context: ?*MainContext) c_int;
     pub const isOwner = g_main_context_is_owner;
 
-    /// Runs a single iteration for the given main loop. This involves
-    /// checking to see if any event sources are ready to be processed,
-    /// then if no events sources are ready and `may_block` is `TRUE`, waiting
-    /// for a source to become ready, then dispatching the highest priority
-    /// events sources that are ready. Otherwise, if `may_block` is `FALSE`
-    /// sources are not waited to become ready, only those highest priority
-    /// events sources will be dispatched (if any), that are ready at this
-    /// given moment without further waiting.
+    /// Runs a single iteration for the given main loop.
     ///
-    /// Note that even when `may_block` is `TRUE`, it is still possible for
-    /// `glib.MainContext.iteration` to return `FALSE`, since the wait may
+    /// This involves
+    /// checking to see if any event sources are ready to be processed,
+    /// then if no events sources are ready and `may_block` is true, waiting
+    /// for a source to become ready, then dispatching the highest priority
+    /// events sources that are ready. Otherwise, if `may_block` is false,
+    /// this function does not wait for sources to become ready, and only the highest
+    /// priority sources which are already ready (if any) will be dispatched.
+    ///
+    /// Note that even when `may_block` is true, it is still possible for
+    /// `glib.MainContext.iteration` to return false, since the wait may
     /// be interrupted for other reasons than an event source becoming ready.
     extern fn g_main_context_iteration(p_context: ?*MainContext, p_may_block: c_int) c_int;
     pub const iteration = g_main_context_iteration;
@@ -5278,7 +5320,9 @@ pub const MainContext = opaque {
     extern fn g_main_context_pop_thread_default(p_context: ?*MainContext) void;
     pub const popThreadDefault = g_main_context_pop_thread_default;
 
-    /// Prepares to poll sources within a main loop. The resulting information
+    /// Prepares to poll sources within a main loop.
+    ///
+    /// The resulting information
     /// for polling is determined by calling `glib.MainContext.query`.
     ///
     /// You must have successfully acquired the context with
@@ -5304,8 +5348,8 @@ pub const MainContext = opaque {
     /// the new `glib.MainContext` to be the default for the whole lifecycle
     /// of the thread.
     ///
-    /// If you don't have control over how the new thread was created (e.g.
-    /// in the new thread isn't newly created, or if the thread life
+    /// If you don’t have control over how the new thread was created (e.g.
+    /// in the new thread isn’t newly created, or if the thread life
     /// cycle is managed by a `glib.ThreadPool`), it is always suggested to wrap
     /// the logic that needs to use the new `glib.MainContext` inside a
     /// `glib.MainContext.pushThreadDefault` /
@@ -5323,54 +5367,16 @@ pub const MainContext = opaque {
     /// started while the non-default context is active.
     ///
     /// Beware that libraries that predate this function may not correctly
-    /// handle being used from a thread with a thread-default context. Eg,
-    /// see `g_file_supports_thread_contexts`.
+    /// handle being used from a thread with a thread-default context. For example,
+    /// see ``g_file_supports_thread_contexts``.
     extern fn g_main_context_push_thread_default(p_context: ?*MainContext) void;
     pub const pushThreadDefault = g_main_context_push_thread_default;
 
-    /// Push `main_context` as the new thread-default main context for the current
-    /// thread, using `glib.MainContext.pushThreadDefault`, and return a
-    /// new `glib.MainContextPusher`. Pop with `glib.MainContext.pusherFree`.
-    /// Using `glib.MainContext.popThreadDefault` on `main_context` while a
-    /// `glib.MainContextPusher` exists for it can lead to undefined behaviour.
+    /// Determines information necessary to poll this main loop.
     ///
-    /// Using two `glib.MainContextPusher`s in the same scope is not allowed,
-    /// as it leads to an undefined pop order.
-    ///
-    /// This is intended to be used with `g_autoptr`.  Note that `g_autoptr`
-    /// is only available when using GCC or clang, so the following example
-    /// will only work with those compilers:
-    /// ```
-    /// typedef struct
-    /// {
-    ///   ...
-    ///   GMainContext *context;
-    ///   ...
-    /// } MyObject;
-    ///
-    /// static void
-    /// my_object_do_stuff (MyObject *self)
-    /// {
-    ///   g_autoptr(GMainContextPusher) pusher = g_main_context_pusher_new (self->context);
-    ///
-    ///   // Code with main context as the thread default here
-    ///
-    ///   if (cond)
-    ///     // No need to pop
-    ///     return;
-    ///
-    ///   // Optionally early pop
-    ///   g_clear_pointer (&pusher, g_main_context_pusher_free);
-    ///
-    ///   // Code with main context no longer the thread default here
-    /// }
-    /// ```
-    extern fn g_main_context_pusher_new(p_main_context: *MainContext) *glib.MainContextPusher;
-    pub const pusherNew = g_main_context_pusher_new;
-
-    /// Determines information necessary to poll this main loop. You should
+    /// You should
     /// be careful to pass the resulting `fds` array and its length `n_fds`
-    /// as is when calling `glib.MainContext.check`, as this function relies
+    /// as-is when calling `glib.MainContext.check`, as this function relies
     /// on assumptions made when the array is filled.
     ///
     /// You must have successfully acquired the context with
@@ -5383,7 +5389,9 @@ pub const MainContext = opaque {
     pub const ref = g_main_context_ref;
 
     /// Releases ownership of a context previously acquired by this thread
-    /// with `glib.MainContext.acquire`. If the context was acquired multiple
+    /// with `glib.MainContext.acquire`.
+    ///
+    /// If the context was acquired multiple
     /// times, the ownership will be released only when `glib.MainContext.release`
     /// is called as many times as it was acquired.
     ///
@@ -5397,10 +5405,11 @@ pub const MainContext = opaque {
     extern fn g_main_context_remove_poll(p_context: ?*MainContext, p_fd: *glib.PollFD) void;
     pub const removePoll = g_main_context_remove_poll;
 
-    /// Sets the function to use to handle polling of file descriptors. It
-    /// will be used instead of the `poll` system call
-    /// (or GLib's replacement function, which is used where
-    /// `poll` isn't available).
+    /// Sets the function to use to handle polling of file descriptors.
+    ///
+    /// It will be used instead of the [``poll``](man:poll(2)) system call
+    /// (or GLib’s replacement function, which is used where
+    /// ``poll`` isn’t available).
     ///
     /// This function could possibly be used to integrate the GLib event
     /// loop with an external event loop.
@@ -5413,18 +5422,23 @@ pub const MainContext = opaque {
     extern fn g_main_context_unref(p_context: *MainContext) void;
     pub const unref = g_main_context_unref;
 
-    /// Tries to become the owner of the specified context,
-    /// as with `glib.MainContext.acquire`. But if another thread
+    /// Tries to become the owner of the specified context, and waits on `cond` if
+    /// another thread is the owner.
+    ///
+    /// This is the same as `glib.MainContext.acquire`, but if another thread
     /// is the owner, atomically drop `mutex` and wait on `cond` until
     /// that owner releases ownership or until `cond` is signaled, then
     /// try again (once) to become the owner.
     extern fn g_main_context_wait(p_context: ?*MainContext, p_cond: *glib.Cond, p_mutex: *glib.Mutex) c_int;
     pub const wait = g_main_context_wait;
 
-    /// If `context` is currently blocking in `glib.MainContext.iteration`
-    /// waiting for a source to become ready, cause it to stop blocking
-    /// and return.  Otherwise, cause the next invocation of
-    /// `glib.MainContext.iteration` to return without blocking.
+    /// Wake up `context` if it’s currently blocking in
+    /// `glib.MainContext.iteration`, causing it to stop blocking.
+    ///
+    /// The `context` could be blocking waiting for a source to become ready.
+    /// Otherwise, if `context` is not currently blocking, this function causes the
+    /// next invocation of `glib.MainContext.iteration` to return without
+    /// blocking.
     ///
     /// This API is useful for low-level control over `glib.MainContext`; for
     /// example, integrating it with main loop implementations such as
@@ -5433,7 +5447,7 @@ pub const MainContext = opaque {
     /// Another related use for this function is when implementing a main
     /// loop with a termination condition, computed from multiple threads:
     ///
-    /// ```
+    /// ```c
     ///   `define` NUM_TASKS 10
     ///   static gint tasks_remaining = NUM_TASKS;  // (atomic)
     ///   ...
@@ -5443,8 +5457,8 @@ pub const MainContext = opaque {
     /// ```
     ///
     /// Then in a thread:
-    /// ```
-    ///   `perform_work`;
+    /// ```c
+    ///   perform_work ();
     ///
     ///   if (g_atomic_int_dec_and_test (&tasks_remaining))
     ///     g_main_context_wakeup (NULL);
@@ -5490,14 +5504,16 @@ pub const MainLoop = opaque {
     pub const ref = g_main_loop_ref;
 
     /// Runs a main loop until `glib.MainLoop.quit` is called on the loop.
-    /// If this is called for the thread of the loop's `glib.MainContext`,
+    ///
+    /// If this is called from the thread of the loop’s `glib.MainContext`,
     /// it will process events from the loop, otherwise it will
     /// simply wait.
     extern fn g_main_loop_run(p_loop: *MainLoop) void;
     pub const run = g_main_loop_run;
 
-    /// Decreases the reference count on a `glib.MainLoop` object by one. If
-    /// the result is zero, free the loop and free all associated memory.
+    /// Decreases the reference count on a `glib.MainLoop` object by one.
+    ///
+    /// If the result is zero, the loop and all associated memory are freed.
     extern fn g_main_loop_unref(p_loop: *MainLoop) void;
     pub const unref = g_main_loop_unref;
 
@@ -5831,6 +5847,10 @@ pub const MarkupParseContext = opaque {
 /// errors are intended to be set from these callbacks. If you set an error
 /// from a callback, `glib.MarkupParseContext.parse` will report that error
 /// back to its caller.
+///
+/// Refer to the [GMarkup](../glib/markup.html) documentation to understand
+/// the scope and limitations of `GMarkupParser`. In particular, it is not a
+/// full XML parser and it must not be used to process untrusted data.
 pub const MarkupParser = extern struct {
     /// Callback to invoke when the opening tag of an element
     ///     is seen. The callback's `attribute_names` and `attribute_values` parameters
@@ -5938,22 +5958,215 @@ pub const MatchInfo = opaque {
     /// If `name` is a valid sub pattern name but it didn't match anything
     /// (e.g. sub pattern `"X"`, matching `"b"` against `"(?P<X>a)?b"`)
     /// then `start_pos` and `end_pos` are set to -1 and `TRUE` is returned.
+    ///
+    /// As `end_pos` is set to the byte after the final byte of the match (on success),
+    /// the length of the match can be calculated as `end_pos - start_pos`.
     extern fn g_match_info_fetch_named_pos(p_match_info: *const MatchInfo, p_name: [*:0]const u8, p_start_pos: ?*c_int, p_end_pos: ?*c_int) c_int;
     pub const fetchNamedPos = g_match_info_fetch_named_pos;
 
-    /// Retrieves the position in bytes of the `match_num`'th capturing
-    /// parentheses. 0 is the full text of the match, 1 is the first
-    /// paren set, 2 the second, and so on.
+    /// Returns the start and end positions (in bytes) of a successfully matching
+    /// capture parenthesis.
     ///
-    /// If `match_num` is a valid sub pattern but it didn't match anything
-    /// (e.g. sub pattern 1, matching "b" against "(a)?b") then `start_pos`
-    /// and `end_pos` are set to -1 and `TRUE` is returned.
+    /// Valid values for `match_num` are `0` for the full text of the match,
+    /// `1` for the first paren set, `2` for the second, and so on.
     ///
-    /// If the match was obtained using the DFA algorithm, that is using
-    /// `glib.Regex.matchAll` or `glib.Regex.matchAllFull`, the retrieved
-    /// position is not that of a set of parentheses but that of a matched
-    /// substring. Substrings are matched in reverse order of length, so
-    /// 0 is the longest match.
+    /// As `end_pos` is set to the byte after the final byte of the match (on success),
+    /// the length of the match can be calculated as `end_pos - start_pos`.
+    ///
+    /// As a best practice, initialize `start_pos` and `end_pos` to identifiable
+    /// values, such as `G_MAXINT`, so that you can test if
+    /// ``glib.MatchInfo.fetchPos`` actually changed the value for a given
+    /// capture parenthesis.
+    ///
+    /// The parameter `match_num` corresponds to a matched capture parenthesis. The
+    /// actual value you use for `match_num` depends on the method used to generate
+    /// `match_info`. The following sections describe those methods.
+    ///
+    /// ## Methods Using Non-deterministic Finite Automata Matching
+    ///
+    /// The methods `glib.Regex.match` and `glib.Regex.matchFull`
+    /// return a `glib.MatchInfo` using traditional (greedy) pattern
+    /// matching, also known as
+    /// [Non-deterministic Finite Automaton](https://en.wikipedia.org/wiki/Nondeterministic_finite_automaton)
+    /// (NFA) matching. You pass the returned `GMatchInfo` from these methods to
+    /// ``glib.MatchInfo.fetchPos`` to determine the start and end positions
+    /// of capture parentheses. The values for `match_num` correspond to the capture
+    /// parentheses in order, with `0` corresponding to the entire matched string.
+    ///
+    /// `match_num` can refer to a capture parenthesis with no match. For example,
+    /// the string `b` matches against the pattern `(a)?b`, but the capture
+    /// parenthesis `(a)` has no match. In this case, ``glib.MatchInfo.fetchPos``
+    /// returns true and sets `start_pos` and `end_pos` to `-1` when called with
+    /// `match_num` as `1` (for `(a)`).
+    ///
+    /// For an expanded example, a regex pattern is `(a)?(.*?)the (.*)`,
+    /// and a candidate string is `glib regexes are the best`. In this scenario
+    /// there are four capture parentheses numbered 0–3: an implicit one
+    /// for the entire string, and three explicitly declared in the regex pattern.
+    ///
+    /// Given this example, the following table describes the return values
+    /// from ``glib.MatchInfo.fetchPos`` for various values of `match_num`.
+    ///
+    /// `match_num` | Contents | Return value | Returned `start_pos` | Returned `end_pos`
+    /// ----------- | -------- | ------------ | -------------------- | ------------------
+    /// 0 | Matches entire string | True | 0 | 25
+    /// 1 | Does not match first character | True | -1 | -1
+    /// 2 | All text before `the ` | True | 0 | 17
+    /// 3 | All text after `the ` | True | 21 | 25
+    /// 4 | Capture paren out of range | False | Unchanged | Unchanged
+    ///
+    /// The following code sample and output implements this example.
+    ///
+    /// ``` { .c }
+    /// `include` <glib.h>
+    ///
+    /// int
+    /// main (int argc, char *argv[])
+    /// {
+    ///   g_autoptr(GError) local_error = NULL;
+    ///   const char *regex_pattern = "(a)?(.*?)the (.*)";
+    ///   const char *test_string = "glib regexes are the best";
+    ///   g_autoptr(GRegex) regex = NULL;
+    ///
+    ///   regex = g_regex_new (regex_pattern,
+    ///                        G_REGEX_DEFAULT,
+    ///                        G_REGEX_MATCH_DEFAULT,
+    ///                        &local_error);
+    ///   if (regex == NULL)
+    ///     {
+    ///       g_printerr ("Error creating regex: `s`\n", local_error->message);
+    ///       return 1;
+    ///     }
+    ///
+    ///   g_autoptr(GMatchInfo) match_info = NULL;
+    ///   g_regex_match (regex, test_string, G_REGEX_MATCH_DEFAULT, &match_info);
+    ///
+    ///   int n_matched_strings = g_match_info_get_match_count (match_info);
+    ///
+    ///   // Print header line
+    ///   g_print ("match_num Contents                  Return value returned start_pos returned end_pos\n");
+    ///
+    ///   // Iterate over each capture paren, including one that is out of range as a demonstration.
+    ///   for (int match_num = 0; match_num <= n_matched_strings; match_num++)
+    ///     {
+    ///       gboolean found_match;
+    ///       g_autofree char *paren_string = NULL;
+    ///       int start_pos = G_MAXINT;
+    ///       int end_pos = G_MAXINT;
+    ///
+    ///       found_match = g_match_info_fetch_pos (match_info,
+    ///                                             match_num,
+    ///                                             &start_pos,
+    ///                                             &end_pos);
+    ///
+    ///       // If no match, display N/A as the found string.
+    ///       if (start_pos == G_MAXINT || start_pos == -1)
+    ///         paren_string = g_strdup ("N/A");
+    ///       else
+    ///         paren_string = g_strndup (test_string + start_pos, end_pos - start_pos);
+    ///
+    ///       g_print ("%-9d %-25s %-12d %-18d `d`\n", match_num, paren_string, found_match, start_pos, end_pos);
+    ///     }
+    ///
+    ///   return 0;
+    /// }
+    /// ```
+    ///
+    /// ```
+    /// match_num Contents                  Return value returned start_pos returned end_pos
+    /// 0         glib regexes are the best 1            0                  25
+    /// 1         N/A                       1            -1                 -1
+    /// 2         glib regexes are          1            0                  17
+    /// 3         best                      1            21                 25
+    /// 4         N/A                       0            2147483647         2147483647
+    /// ```
+    /// ## Methods Using Deterministic Finite Automata Matching
+    ///
+    /// The methods `glib.Regex.matchAll` and
+    /// `glib.Regex.matchAllFull`
+    /// return a `GMatchInfo` using
+    /// [Deterministic Finite Automaton](https://en.wikipedia.org/wiki/Deterministic_finite_automaton)
+    /// (DFA) pattern matching. This algorithm detects overlapping matches. You pass
+    /// the returned `GMatchInfo` from these methods to ``glib.MatchInfo.fetchPos``
+    /// to determine the start and end positions of each overlapping match. Use the
+    /// method `glib.MatchInfo.getMatchCount` to determine the number
+    /// of overlapping matches.
+    ///
+    /// For example, a regex pattern is `<.*>`, and a candidate string is
+    /// `<a> <b> <c>`. In this scenario there are three implicit capture
+    /// parentheses: one for the entire string, one for `<a> <b>`, and one for `<a>`.
+    ///
+    /// Given this example, the following table describes the return values from
+    /// ``glib.MatchInfo.fetchPos`` for various values of `match_num`.
+    ///
+    /// `match_num` | Contents | Return value | Returned `start_pos` | Returned `end_pos`
+    /// ----------- | -------- | ------------ | -------------------- | ------------------
+    /// 0 | Matches entire string | True | 0 | 11
+    /// 1 | Matches `<a> <b>` | True | 0 | 7
+    /// 2 | Matches `<a>` | True | 0 | 3
+    /// 3 | Capture paren out of range | False | Unchanged | Unchanged
+    ///
+    /// The following code sample and output implements this example.
+    ///
+    /// ``` { .c }
+    /// `include` <glib.h>
+    ///
+    /// int
+    /// main (int argc, char *argv[])
+    /// {
+    ///   g_autoptr(GError) local_error = NULL;
+    ///   const char *regex_pattern = "<.*>";
+    ///   const char *test_string = "<a> <b> <c>";
+    ///   g_autoptr(GRegex) regex = NULL;
+    ///
+    ///   regex = g_regex_new (regex_pattern,
+    ///                        G_REGEX_DEFAULT,
+    ///                        G_REGEX_MATCH_DEFAULT,
+    ///                        &local_error);
+    ///   if (regex == NULL)
+    ///     {
+    ///       g_printerr ("Error creating regex: `s`\n", local_error->message);
+    ///       return -1;
+    ///     }
+    ///
+    ///   g_autoptr(GMatchInfo) match_info = NULL;
+    ///   g_regex_match_all (regex, test_string, G_REGEX_MATCH_DEFAULT, &match_info);
+    ///
+    ///   int n_matched_strings = g_match_info_get_match_count (match_info);
+    ///
+    ///   // Print header line
+    ///   g_print ("match_num Contents                  Return value returned start_pos returned end_pos\n");
+    ///
+    ///   // Iterate over each capture paren, including one that is out of range as a demonstration.
+    ///   for (int match_num = 0; match_num <= n_matched_strings; match_num++)
+    ///     {
+    ///       gboolean found_match;
+    ///       g_autofree char *paren_string = NULL;
+    ///       int start_pos = G_MAXINT;
+    ///       int end_pos = G_MAXINT;
+    ///
+    ///       found_match = g_match_info_fetch_pos (match_info, match_num, &start_pos, &end_pos);
+    ///
+    ///       // If no match, display N/A as the found string.
+    ///       if (start_pos == G_MAXINT || start_pos == -1)
+    ///         paren_string = g_strdup ("N/A");
+    ///       else
+    ///         paren_string = g_strndup (test_string + start_pos, end_pos - start_pos);
+    ///
+    ///       g_print ("%-9d %-25s %-12d %-18d `d`\n", match_num, paren_string, found_match, start_pos, end_pos);
+    ///     }
+    ///
+    ///   return 0;
+    /// }
+    /// ```
+    ///
+    /// ```
+    /// match_num Contents                  Return value returned start_pos returned end_pos
+    /// 0         <a> <b> <c>               1            0                  11
+    /// 1         <a> <b>                   1            0                  7
+    /// 2         <a>                       1            0                  3
+    /// 3         N/A                       0            2147483647         2147483647
+    /// ```
     extern fn g_match_info_fetch_pos(p_match_info: *const MatchInfo, p_match_num: c_int, p_start_pos: ?*c_int, p_end_pos: ?*c_int) c_int;
     pub const fetchPos = g_match_info_fetch_pos;
 
@@ -6745,7 +6958,7 @@ pub const PathBuf = extern struct {
     /// Compares two path buffers for equality and returns `TRUE`
     /// if they are equal.
     ///
-    /// The path inside the paths buffers are not going to be normalized,
+    /// The paths inside the path buffers are not going to be normalized,
     /// so `X/Y/Z/A/..`, `X/./Y/Z` and `X/Y/Z` are not going to be considered
     /// equal.
     ///
@@ -7069,12 +7282,12 @@ pub const Private = extern struct {
     }
 };
 
-/// Contains the public fields of a pointer array.
+/// Contains the public fields of a `GPtrArray`.
 pub const PtrArray = extern struct {
-    /// points to the array of pointers, which may be moved when the
+    /// a pointer to the array of pointers, which may be moved when the
     ///     array grows
     f_pdata: ?*anyopaque,
-    /// number of pointers in the array
+    /// the number of pointers in the array
     f_len: c_uint,
 
     /// Adds a pointer to the end of the pointer array. The array will grow
@@ -7082,18 +7295,20 @@ pub const PtrArray = extern struct {
     extern fn g_ptr_array_add(p_array: *glib.PtrArray, p_data: ?*anyopaque) void;
     pub const add = g_ptr_array_add;
 
-    /// Makes a full (deep) copy of a `glib.PtrArray`.
+    /// Makes a full (deep) copy of a `GPtrArray`.
     ///
-    /// `func`, as a `glib.CopyFunc`, takes two arguments, the data to be copied
-    /// and a `user_data` pointer. On common processor architectures, it's safe to
+    /// `func`, as a `glib.CopyFunc`, takes two arguments, the data to be
+    /// copied
+    /// and a `user_data` pointer. On common processor architectures, it’s safe to
     /// pass `NULL` as `user_data` if the copy function takes only one argument. You
     /// may get compiler warnings from this though if compiling with GCC’s
     /// `-Wcast-function-type` warning.
     ///
     /// If `func` is `NULL`, then only the pointers (and not what they are
-    /// pointing to) are copied to the new `glib.PtrArray`.
+    /// pointing to) are copied to the new `GPtrArray`.
     ///
-    /// The copy of `array` will have the same `glib.DestroyNotify` for its elements as
+    /// The copy of `array` will have the same `glib.DestroyNotify` for its
+    /// elements as
     /// `array`. The copy will also be `NULL` terminated if (and only if) the source
     /// array is.
     extern fn g_ptr_array_copy(p_array: *glib.PtrArray, p_func: ?glib.CopyFunc, p_user_data: ?*anyopaque) *glib.PtrArray;
@@ -7103,14 +7318,15 @@ pub const PtrArray = extern struct {
     /// The array will grow in size automatically if needed. `array_to_extend` is
     /// modified in-place.
     ///
-    /// `func`, as a `glib.CopyFunc`, takes two arguments, the data to be copied
-    /// and a `user_data` pointer. On common processor architectures, it's safe to
+    /// `func`, as a `glib.CopyFunc`, takes two arguments, the data to be
+    /// copied
+    /// and a `user_data` pointer. On common processor architectures, it’s safe to
     /// pass `NULL` as `user_data` if the copy function takes only one argument. You
     /// may get compiler warnings from this though if compiling with GCC’s
     /// `-Wcast-function-type` warning.
     ///
     /// If `func` is `NULL`, then only the pointers (and not what they are
-    /// pointing to) are copied to the new `glib.PtrArray`.
+    /// pointing to) are copied to the new `GPtrArray`.
     ///
     /// Whether `array_to_extend` is `NULL` terminated stays unchanged by this function.
     extern fn g_ptr_array_extend(p_array_to_extend: *glib.PtrArray, p_array: *glib.PtrArray, p_func: ?glib.CopyFunc, p_user_data: ?*anyopaque) void;
@@ -7120,25 +7336,26 @@ pub const PtrArray = extern struct {
     /// ownership of each element from `array` to `array_to_extend` and modifying
     /// `array_to_extend` in-place. `array` is then freed.
     ///
-    /// As with `glib.PtrArray.free`, `array` will be destroyed if its reference count
-    /// is 1. If its reference count is higher, it will be decremented and the
+    /// As with `glib.PtrArray.free`, `array` will be destroyed if its reference
+    /// count is 1. If its reference count is higher, it will be decremented and the
     /// length of `array` set to zero.
     extern fn g_ptr_array_extend_and_steal(p_array_to_extend: *glib.PtrArray, p_array: *glib.PtrArray) void;
     pub const extendAndSteal = g_ptr_array_extend_and_steal;
 
-    /// Checks whether `needle` exists in `haystack`. If the element is found, `TRUE` is
-    /// returned and the element’s index is returned in `index_` (if non-`NULL`).
-    /// Otherwise, `FALSE` is returned and `index_` is undefined. If `needle` exists
+    /// Checks whether `needle` exists in `haystack`. If the element is found, true
+    /// is returned and the element’s index is returned in `index_` (if non-`NULL`).
+    /// Otherwise, false is returned and `index_` is undefined. If `needle` exists
     /// multiple times in `haystack`, the index of the first instance is returned.
     ///
     /// This does pointer comparisons only. If you want to use more complex equality
-    /// checks, such as string comparisons, use `glib.ptrArrayFindWithEqualFunc`.
+    /// checks, such as string comparisons, use
+    /// `glib.PtrArray.findWithEqualFunc`.
     extern fn g_ptr_array_find(p_haystack: *glib.PtrArray, p_needle: ?*const anyopaque, p_index_: ?*c_uint) c_int;
     pub const find = g_ptr_array_find;
 
     /// Checks whether `needle` exists in `haystack`, using the given `equal_func`.
-    /// If the element is found, `TRUE` is returned and the element’s index is
-    /// returned in `index_` (if non-`NULL`). Otherwise, `FALSE` is returned and `index_`
+    /// If the element is found, true is returned and the element’s index is
+    /// returned in `index_` (if non-`NULL`). Otherwise, false is returned and `index_`
     /// is undefined. If `needle` exists multiple times in `haystack`, the index of
     /// the first instance is returned.
     ///
@@ -7148,30 +7365,30 @@ pub const PtrArray = extern struct {
     extern fn g_ptr_array_find_with_equal_func(p_haystack: *glib.PtrArray, p_needle: ?*const anyopaque, p_equal_func: ?glib.EqualFunc, p_index_: ?*c_uint) c_int;
     pub const findWithEqualFunc = g_ptr_array_find_with_equal_func;
 
-    /// Calls a function for each element of a `glib.PtrArray`. `func` must not
+    /// Calls a function for each element of a `GPtrArray`. `func` must not
     /// add elements to or remove elements from the array.
     extern fn g_ptr_array_foreach(p_array: *glib.PtrArray, p_func: glib.Func, p_user_data: ?*anyopaque) void;
     pub const foreach = g_ptr_array_foreach;
 
-    /// Frees the memory allocated for the `glib.PtrArray`. If `free_segment` is `TRUE`
-    /// it frees the memory block holding the elements as well. Pass `FALSE`
-    /// if you want to free the `glib.PtrArray` wrapper but preserve the
+    /// Frees the memory allocated for the `GPtrArray`. If `free_segment` is true
+    /// it frees the memory block holding the elements as well. Pass false
+    /// if you want to free the `GPtrArray` wrapper but preserve the
     /// underlying array for use elsewhere. If the reference count of `array`
-    /// is greater than one, the `glib.PtrArray` wrapper is preserved but the
+    /// is greater than one, the `GPtrArray` wrapper is preserved but the
     /// size of `array` will be set to zero.
     ///
     /// If array contents point to dynamically-allocated memory, they should
-    /// be freed separately if `free_segment` is `TRUE` and no `glib.DestroyNotify`
-    /// function has been set for `array`.
+    /// be freed separately if `free_segment` is true and no
+    /// `glib.DestroyNotify` function has been set for `array`.
     ///
-    /// Note that if the array is `NULL` terminated and `free_segment` is `FALSE`
+    /// Note that if the array is `NULL` terminated and `free_segment` is false
     /// then this will always return an allocated `NULL` terminated buffer.
-    /// If pdata is previously `NULL`, a new buffer will be allocated.
+    /// If `pdata` is previously `NULL`, a new buffer will be allocated.
     ///
-    /// This function is not thread-safe. If using a `glib.PtrArray` from multiple
-    /// threads, use only the atomic `glib.PtrArray.ref` and `glib.PtrArray.unref`
-    /// functions.
-    extern fn g_ptr_array_free(p_array: *glib.PtrArray, p_free_segment: c_int) ?*anyopaque;
+    /// This function is not thread-safe. If using a `GPtrArray` from multiple
+    /// threads, use only the atomic `glib.PtrArray.ref` and
+    /// `glib.PtrArray.unref` functions.
+    extern fn g_ptr_array_free(p_array: *glib.PtrArray, p_free_segment: c_int) ?[*]*anyopaque;
     pub const free = g_ptr_array_free;
 
     /// Inserts an element into the pointer array at the given index. The
@@ -7179,20 +7396,20 @@ pub const PtrArray = extern struct {
     extern fn g_ptr_array_insert(p_array: *glib.PtrArray, p_index_: c_int, p_data: ?*anyopaque) void;
     pub const insert = g_ptr_array_insert;
 
-    /// Gets whether the `array` was constructed as `NULL`-terminated.
+    /// Checks whether the `array` was constructed as `NULL`-terminated.
     ///
-    /// This will only return `TRUE` for arrays constructed by passing `TRUE` to the
-    /// `null_terminated` argument of `glib.PtrArray.newNullTerminated`. It will not
-    /// return `TRUE` for normal arrays which have had a `NULL` element appended to
-    /// them.
+    /// This will only return true for arrays constructed by passing true to the
+    /// `null_terminated` argument of `glib.PtrArray.newNullTerminated`. It
+    /// will not return true for normal arrays which have had a `NULL` element
+    /// appended to them.
     extern fn g_ptr_array_is_null_terminated(p_array: *glib.PtrArray) c_int;
     pub const isNullTerminated = g_ptr_array_is_null_terminated;
 
-    /// Creates a new `glib.PtrArray` with a reference count of 1.
+    /// Creates a new `GPtrArray` with a reference count of 1.
     extern fn g_ptr_array_new() *glib.PtrArray;
     pub const new = g_ptr_array_new;
 
-    /// Creates a new `glib.PtrArray`, copying `len` pointers from `data`, and setting
+    /// Creates a new `GPtrArray`, copying `len` pointers from `data`, and setting
     /// the array’s reference count to 1.
     ///
     /// This avoids having to manually add each element one by one.
@@ -7202,37 +7419,39 @@ pub const PtrArray = extern struct {
     /// directly.
     ///
     /// It also sets `element_free_func` for freeing each element when the array is
-    /// destroyed either via `glib.PtrArray.unref`, when `glib.PtrArray.free` is called
-    /// with `free_segment` set to `TRUE` or when removing elements.
+    /// destroyed either via `glib.PtrArray.unref`, when
+    /// `glib.PtrArray.free` is called with `free_segment` set to true or when
+    /// removing elements.
     ///
-    /// Do not use it if `len` is greater than `G_MAXUINT`. `glib.PtrArray`
-    /// stores the length of its data in `guint`, which may be shorter than
-    /// `gsize`.
+    /// Do not use it if `len` is greater than [`G_MAXUINT`](types.html`guint`).
+    /// `GPtrArray` stores the length of its data in `guint`, which may be shorter
+    /// than `gsize`.
     extern fn g_ptr_array_new_from_array(p_data: ?[*]*anyopaque, p_len: usize, p_copy_func: ?glib.CopyFunc, p_copy_func_user_data: ?*anyopaque, p_element_free_func: ?glib.DestroyNotify) *glib.PtrArray;
     pub const newFromArray = g_ptr_array_new_from_array;
 
-    /// Creates a new `glib.PtrArray` copying the pointers from `data` after having
+    /// Creates a new `GPtrArray` copying the pointers from `data` after having
     /// computed the length of it and with a reference count of 1.
     /// This avoids having to manually add each element one by one.
     /// If `copy_func` is provided, then it is used to copy the data in the new
     /// array.
-    /// It also set `element_free_func` for freeing each element when the array is
-    /// destroyed either via `glib.PtrArray.unref`, when `glib.PtrArray.free` is called
-    /// with `free_segment` set to `TRUE` or when removing elements.
+    /// It also sets `element_free_func` for freeing each element when the array is
+    /// destroyed either via `glib.PtrArray.unref`, when
+    /// `glib.PtrArray.free` is called with `free_segment` set to true or when
+    /// removing elements.
     ///
-    /// Do not use it if the `data` has more than `G_MAXUINT` elements. `glib.PtrArray`
-    /// stores the length of its data in `guint`, which may be shorter than
-    /// `gsize`.
+    /// Do not use it if the `data` has more than [`G_MAXUINT`](types.html`guint`)
+    /// elements. `GPtrArray` stores the length of its data in `guint`, which may be
+    /// shorter than `gsize`.
     extern fn g_ptr_array_new_from_null_terminated_array(p_data: ?[*]*anyopaque, p_copy_func: ?glib.CopyFunc, p_copy_func_user_data: ?*anyopaque, p_element_free_func: ?glib.DestroyNotify) *glib.PtrArray;
     pub const newFromNullTerminatedArray = g_ptr_array_new_from_null_terminated_array;
 
-    /// Creates a new `glib.PtrArray` with `reserved_size` pointers preallocated
+    /// Creates a new `GPtrArray` with `reserved_size` pointers preallocated
     /// and a reference count of 1. This avoids frequent reallocation, if
     /// you are going to add many pointers to the array. Note however that
-    /// the size of the array is still 0. It also set `element_free_func`
+    /// the size of the array is still 0. It also sets `element_free_func`
     /// for freeing each element when the array is destroyed either via
     /// `glib.PtrArray.unref`, when `glib.PtrArray.free` is called with
-    /// `free_segment` set to `TRUE` or when removing elements.
+    /// `free_segment` set to true or when removing elements.
     extern fn g_ptr_array_new_full(p_reserved_size: c_uint, p_element_free_func: ?glib.DestroyNotify) *glib.PtrArray;
     pub const newFull = g_ptr_array_new_full;
 
@@ -7241,42 +7460,43 @@ pub const PtrArray = extern struct {
     /// additional `NULL` pointer after the last element, beyond the
     /// current length.
     ///
-    /// `glib.PtrArray` created by other constructors are not automatically `NULL`
+    /// `GPtrArray` created by other constructors are not automatically `NULL`
     /// terminated.
     ///
-    /// Note that if the `array`'s length is zero and currently no
-    /// data array is allocated, then pdata will still be `NULL`.
-    /// `glib.PtrArray` will only `NULL` terminate pdata, if an actual
+    /// Note that if the `array`’s length is zero and currently no
+    /// data array is allocated, then `pdata` will still be `NULL`.
+    /// `GPtrArray` will only `NULL` terminate `pdata`, if an actual
     /// array is allocated. It does not guarantee that an array
     /// is always allocated. In other words, if the length is zero,
-    /// then pdata may either point to a `NULL` terminated array of length
+    /// then `pdata` may either point to a `NULL` terminated array of length
     /// zero or be `NULL`.
     extern fn g_ptr_array_new_null_terminated(p_reserved_size: c_uint, p_element_free_func: ?glib.DestroyNotify, p_null_terminated: c_int) *glib.PtrArray;
     pub const newNullTerminated = g_ptr_array_new_null_terminated;
 
-    /// Creates a new `glib.PtrArray` with `data` as pointers, `len` as length and a
+    /// Creates a new `GPtrArray` with `data` as pointers, `len` as length and a
     /// reference count of 1.
     ///
     /// This avoids having to copy such data manually.
-    /// After this call, `data` belongs to the `glib.PtrArray` and may no longer be
+    /// After this call, `data` belongs to the `GPtrArray` and may no longer be
     /// modified by the caller. The memory of `data` has to be dynamically
     /// allocated and will eventually be freed with `glib.free`.
     ///
     /// It also sets `element_free_func` for freeing each element when the array is
-    /// destroyed either via `glib.PtrArray.unref`, when `glib.PtrArray.free` is called
-    /// with `free_segment` set to `TRUE` or when removing elements.
+    /// destroyed either via `glib.PtrArray.unref`, when
+    /// `glib.PtrArray.free` is called with `free_segment` set to true or when
+    /// removing elements.
     ///
-    /// Do not use it if `len` is greater than `G_MAXUINT`. `glib.PtrArray`
-    /// stores the length of its data in `guint`, which may be shorter than
-    /// `gsize`.
+    /// Do not use it if `len` is greater than [`G_MAXUINT`](types.html`guint`).
+    /// `GPtrArray` stores the length of its data in `guint`, which may be shorter
+    /// than `gsize`.
     extern fn g_ptr_array_new_take(p_data: ?[*]*anyopaque, p_len: usize, p_element_free_func: ?glib.DestroyNotify) *glib.PtrArray;
     pub const newTake = g_ptr_array_new_take;
 
-    /// Creates a new `glib.PtrArray` with `data` as pointers, computing the length of it
+    /// Creates a new `GPtrArray` with `data` as pointers, computing the length of it
     /// and setting the reference count to 1.
     ///
     /// This avoids having to copy such data manually.
-    /// After this call, `data` belongs to the `glib.PtrArray` and may no longer be
+    /// After this call, `data` belongs to the `GPtrArray` and may no longer be
     /// modified by the caller. The memory of `data` has to be dynamically
     /// allocated and will eventually be freed with `glib.free`.
     ///
@@ -7284,19 +7504,20 @@ pub const PtrArray = extern struct {
     /// element is found.
     ///
     /// It also sets `element_free_func` for freeing each element when the array is
-    /// destroyed either via `glib.PtrArray.unref`, when `glib.PtrArray.free` is called
-    /// with `free_segment` set to `TRUE` or when removing elements.
+    /// destroyed either via `glib.PtrArray.unref`, when
+    /// `glib.PtrArray.free` is called with `free_segment` set to true or when
+    /// removing elements.
     ///
-    /// Do not use it if the `data` length is greater than `G_MAXUINT`. `glib.PtrArray`
-    /// stores the length of its data in `guint`, which may be shorter than
-    /// `gsize`.
+    /// Do not use it if the `data` length is greater than
+    /// [`G_MAXUINT`](types.html`guint`). `GPtrArray` stores the length of its data
+    /// in `guint`, which may be shorter than `gsize`.
     extern fn g_ptr_array_new_take_null_terminated(p_data: ?[*]*anyopaque, p_element_free_func: ?glib.DestroyNotify) *glib.PtrArray;
     pub const newTakeNullTerminated = g_ptr_array_new_take_null_terminated;
 
-    /// Creates a new `glib.PtrArray` with a reference count of 1 and use
+    /// Creates a new `GPtrArray` with a reference count of 1 and use
     /// `element_free_func` for freeing each element when the array is destroyed
-    /// either via `glib.PtrArray.unref`, when `glib.PtrArray.free` is called with
-    /// `free_segment` set to `TRUE` or when removing elements.
+    /// either via `glib.PtrArray.unref`, when `glib.PtrArray.free` is
+    /// called with `free_segment` set to true or when removing elements.
     extern fn g_ptr_array_new_with_free_func(p_element_free_func: ?glib.DestroyNotify) *glib.PtrArray;
     pub const newWithFreeFunc = g_ptr_array_new_with_free_func;
 
@@ -7310,7 +7531,7 @@ pub const PtrArray = extern struct {
     /// has a non-`NULL` `glib.DestroyNotify` function it is called for the
     /// removed element.
     ///
-    /// It returns `TRUE` if the pointer was removed, or `FALSE` if the
+    /// It returns true if the pointer was removed, or false if the
     /// pointer was not found.
     extern fn g_ptr_array_remove(p_array: *glib.PtrArray, p_data: ?*anyopaque) c_int;
     pub const remove = g_ptr_array_remove;
@@ -7321,16 +7542,18 @@ pub const PtrArray = extern struct {
     /// is faster than `glib.PtrArray.remove`. If `array` has a non-`NULL`
     /// `glib.DestroyNotify` function it is called for the removed element.
     ///
-    /// It returns `TRUE` if the pointer was removed, or `FALSE` if the
+    /// It returns true if the pointer was removed, or false if the
     /// pointer was not found.
     extern fn g_ptr_array_remove_fast(p_array: *glib.PtrArray, p_data: ?*anyopaque) c_int;
     pub const removeFast = g_ptr_array_remove_fast;
 
     /// Removes the pointer at the given index from the pointer array.
     /// The following elements are moved down one place. If `array` has
-    /// a non-`NULL` `glib.DestroyNotify` function it is called for the removed
+    /// a non-`NULL` `glib.DestroyNotify` function it is called for the
+    /// removed
     /// element. If so, the return value from this function will potentially point
-    /// to freed memory (depending on the `glib.DestroyNotify` implementation).
+    /// to freed memory (depending on the `glib.DestroyNotify`
+    /// implementation).
     extern fn g_ptr_array_remove_index(p_array: *glib.PtrArray, p_index_: c_uint) ?*anyopaque;
     pub const removeIndex = g_ptr_array_remove_index;
 
@@ -7338,52 +7561,54 @@ pub const PtrArray = extern struct {
     /// The last element in the array is used to fill in the space, so
     /// this function does not preserve the order of the array. But it
     /// is faster than `glib.PtrArray.removeIndex`. If `array` has a non-`NULL`
-    /// `glib.DestroyNotify` function it is called for the removed element. If so, the
+    /// `glib.DestroyNotify` function it is called for the removed element.
+    /// If so, the
     /// return value from this function will potentially point to freed memory
     /// (depending on the `glib.DestroyNotify` implementation).
     extern fn g_ptr_array_remove_index_fast(p_array: *glib.PtrArray, p_index_: c_uint) ?*anyopaque;
     pub const removeIndexFast = g_ptr_array_remove_index_fast;
 
     /// Removes the given number of pointers starting at the given index
-    /// from a `glib.PtrArray`. The following elements are moved to close the
+    /// from a `GPtrArray`. The following elements are moved to close the
     /// gap. If `array` has a non-`NULL` `glib.DestroyNotify` function it is
     /// called for the removed elements.
     extern fn g_ptr_array_remove_range(p_array: *glib.PtrArray, p_index_: c_uint, p_length: c_uint) *glib.PtrArray;
     pub const removeRange = g_ptr_array_remove_range;
 
     /// Sets a function for freeing each element when `array` is destroyed
-    /// either via `glib.PtrArray.unref`, when `glib.PtrArray.free` is called
-    /// with `free_segment` set to `TRUE` or when removing elements.
+    /// either via `glib.PtrArray.unref`, when `glib.PtrArray.free` is
+    /// called with `free_segment` set to true or when removing elements.
     extern fn g_ptr_array_set_free_func(p_array: *glib.PtrArray, p_element_free_func: ?glib.DestroyNotify) void;
     pub const setFreeFunc = g_ptr_array_set_free_func;
 
     /// Sets the size of the array. When making the array larger,
     /// newly-added elements will be set to `NULL`. When making it smaller,
-    /// if `array` has a non-`NULL` `glib.DestroyNotify` function then it will be
-    /// called for the removed elements.
+    /// if `array` has a non-`NULL` `glib.DestroyNotify` function then it
+    /// will be called for the removed elements.
     extern fn g_ptr_array_set_size(p_array: *glib.PtrArray, p_length: c_int) void;
     pub const setSize = g_ptr_array_set_size;
 
-    /// Creates a new `glib.PtrArray` with `reserved_size` pointers preallocated
+    /// Creates a new `GPtrArray` with `reserved_size` pointers preallocated
     /// and a reference count of 1. This avoids frequent reallocation, if
     /// you are going to add many pointers to the array. Note however that
     /// the size of the array is still 0.
     extern fn g_ptr_array_sized_new(p_reserved_size: c_uint) *glib.PtrArray;
     pub const sizedNew = g_ptr_array_sized_new;
 
-    /// Sorts the array, using `compare_func` which should be a `qsort`-style
+    /// Sorts the array, using `compare_func` which should be a ``qsort``-style
     /// comparison function (returns less than zero for first arg is less
     /// than second arg, zero for equal, greater than zero if first arg is
     /// greater than second arg).
     ///
-    /// Note that the comparison function for `glib.PtrArray.sort` doesn't
+    /// Note that the comparison function for `glib.PtrArray.sort` doesn’t
     /// take the pointers from the array as arguments, it takes pointers to
     /// the pointers in the array.
     ///
     /// Use `glib.PtrArray.sortValues` if you want to use normal
-    /// `GCompareFuncs`, otherwise here is a full example of use:
+    /// `glib.CompareFunc` instances, otherwise here is a full example of
+    /// use:
     ///
-    /// ```
+    /// ```c
     /// typedef struct
     /// {
     ///   gchar *name;
@@ -7412,7 +7637,7 @@ pub const PtrArray = extern struct {
     extern fn g_ptr_array_sort(p_array: *glib.PtrArray, p_compare_func: glib.CompareFunc) void;
     pub const sort = g_ptr_array_sort;
 
-    /// Sorts the array, using `compare_func` which should be a `qsort`-style
+    /// Sorts the array, using `compare_func` which should be a ``qsort``-style
     /// comparison function (returns less than zero for first arg is less
     /// than second arg, zero for equal, greater than zero if first arg is
     /// greater than second arg).
@@ -7421,8 +7646,8 @@ pub const PtrArray = extern struct {
     extern fn g_ptr_array_sort_values(p_array: *glib.PtrArray, p_compare_func: glib.CompareFunc) void;
     pub const sortValues = g_ptr_array_sort_values;
 
-    /// Like `glib.PtrArray.sortValues`, but the comparison function has an extra
-    /// user data argument.
+    /// Like `glib.PtrArray.sortValues`, but the comparison function has an
+    /// extra user data argument.
     ///
     /// This is guaranteed to be a stable sort.
     extern fn g_ptr_array_sort_values_with_data(p_array: *glib.PtrArray, p_compare_func: glib.CompareDataFunc, p_user_data: ?*anyopaque) void;
@@ -7432,13 +7657,14 @@ pub const PtrArray = extern struct {
     /// user data argument.
     ///
     /// Note that the comparison function for `glib.PtrArray.sortWithData`
-    /// doesn't take the pointers from the array as arguments, it takes
+    /// doesn’t take the pointers from the array as arguments, it takes
     /// pointers to the pointers in the array.
     ///
     /// Use `glib.PtrArray.sortValuesWithData` if you want to use normal
-    /// `GCompareDataFuncs`, otherwise here is a full example of use:
+    /// `glib.CompareDataFunc` instances, otherwise here is a full example
+    /// of use:
     ///
-    /// ```
+    /// ```c
     /// typedef enum { SORT_NAME, SORT_SIZE } SortMode;
     ///
     /// typedef struct
@@ -7500,7 +7726,7 @@ pub const PtrArray = extern struct {
     /// responsible for freeing the array elements.
     ///
     /// An example of use:
-    /// ```
+    /// ```c
     /// g_autoptr(GPtrArray) chunk_buffer = g_ptr_array_new_with_free_func (g_bytes_unref);
     ///
     /// // Some part of your application appends a number of chunks to the pointer array.
@@ -7531,11 +7757,12 @@ pub const PtrArray = extern struct {
     /// // next set of chunks.
     /// g_assert (chunk_buffer->len == 0);
     /// ```
-    extern fn g_ptr_array_steal(p_array: *glib.PtrArray, p_len: ?*usize) ?*anyopaque;
+    extern fn g_ptr_array_steal(p_array: *glib.PtrArray, p_len: ?*usize) ?[*]*anyopaque;
     pub const steal = g_ptr_array_steal;
 
     /// Removes the pointer at the given index from the pointer array.
-    /// The following elements are moved down one place. The `glib.DestroyNotify` for
+    /// The following elements are moved down one place. The
+    /// `glib.DestroyNotify` for
     /// `array` is *not* called on the removed element; ownership is transferred to
     /// the caller of this function.
     extern fn g_ptr_array_steal_index(p_array: *glib.PtrArray, p_index_: c_uint) ?*anyopaque;
@@ -7544,7 +7771,8 @@ pub const PtrArray = extern struct {
     /// Removes the pointer at the given index from the pointer array.
     /// The last element in the array is used to fill in the space, so
     /// this function does not preserve the order of the array. But it
-    /// is faster than `glib.PtrArray.stealIndex`. The `glib.DestroyNotify` for `array` is
+    /// is faster than `glib.PtrArray.stealIndex`. The
+    /// `glib.DestroyNotify` for `array` is
     /// *not* called on the removed element; ownership is transferred to the caller
     /// of this function.
     extern fn g_ptr_array_steal_index_fast(p_array: *glib.PtrArray, p_index_: c_uint) ?*anyopaque;
@@ -7552,7 +7780,7 @@ pub const PtrArray = extern struct {
 
     /// Atomically decrements the reference count of `array` by one. If the
     /// reference count drops to 0, the effect is the same as calling
-    /// `glib.PtrArray.free` with `free_segment` set to `TRUE`. This function
+    /// `glib.PtrArray.free` with `free_segment` set to true. This function
     /// is thread-safe and may be called from any thread.
     extern fn g_ptr_array_unref(p_array: *glib.PtrArray) void;
     pub const unref = g_ptr_array_unref;
@@ -8113,58 +8341,133 @@ pub const RecMutex = extern struct {
     }
 };
 
-/// A `GRegex` is the "compiled" form of a regular expression pattern.
+/// A `GRegex` is a compiled form of a regular expression.
+///
+/// After instantiating a `GRegex`, you can use its methods to find matches
+/// in a string, replace matches within a string, or split the string at matches.
 ///
 /// `GRegex` implements regular expression pattern matching using syntax and
-/// semantics similar to Perl regular expression. See the
-/// [PCRE documentation](man:pcrepattern(3)) for the syntax definition.
+/// semantics (such as character classes, quantifiers, and capture groups)
+/// similar to Perl regular expression. See the
+/// [PCRE documentation](man:pcre2pattern(3)) for details.
 ///
-/// Some functions accept a `start_position` argument, setting it differs
-/// from just passing over a shortened string and setting `G_REGEX_MATCH_NOTBOL`
-/// in the case of a pattern that begins with any kind of lookbehind assertion.
-/// For example, consider the pattern "\Biss\B" which finds occurrences of "iss"
-/// in the middle of words. ("\B" matches only if the current position in the
-/// subject is not a word boundary.) When applied to the string "Mississipi"
-/// from the fourth byte, namely "issipi", it does not match, because "\B" is
-/// always false at the start of the subject, which is deemed to be a word
-/// boundary. However, if the entire string is passed , but with
-/// `start_position` set to 4, it finds the second occurrence of "iss" because
-/// it is able to look behind the starting point to discover that it is
-/// preceded by a letter.
+/// A typical scenario for regex pattern matching is to check if a string
+/// matches a pattern. The following statements implement this scenario.
 ///
-/// Note that, unless you set the `G_REGEX_RAW` flag, all the strings passed
-/// to these functions must be encoded in UTF-8. The lengths and the positions
-/// inside the strings are in bytes and not in characters, so, for instance,
-/// "\xc3\xa0" (i.e. "à") is two bytes long but it is treated as a
-/// single character. If you set `G_REGEX_RAW` the strings can be non-valid
-/// UTF-8 strings and a byte is treated as a character, so "\xc3\xa0" is two
-/// bytes and two characters long.
+/// ``` { .c }
+/// const char *regex_pattern = ".*GLib.*";
+/// const char *string_to_search = "You will love the GLib implementation of regex";
+/// g_autoptr(GMatchInfo) match_info = NULL;
+/// g_autoptr(GRegex) regex = NULL;
 ///
-/// When matching a pattern, "\n" matches only against a "\n" character in
-/// the string, and "\r" matches only a "\r" character. To match any newline
-/// sequence use "\R". This particular group matches either the two-character
-/// sequence CR + LF ("\r\n"), or one of the single characters LF (linefeed,
-/// U+000A, "\n"), VT vertical tab, U+000B, "\v"), FF (formfeed, U+000C, "\f"),
-/// CR (carriage return, U+000D, "\r"), NEL (next line, U+0085), LS (line
-/// separator, U+2028), or PS (paragraph separator, U+2029).
+/// regex = g_regex_new (regex_pattern, G_REGEX_DEFAULT, G_REGEX_MATCH_DEFAULT, NULL);
+/// g_assert (regex != NULL);
+///
+/// if (g_regex_match (regex, string_to_search, G_REGEX_MATCH_DEFAULT, &match_info))
+///   {
+///     int start_pos, end_pos;
+///     g_match_info_fetch_pos (match_info, 0, &start_pos, &end_pos);
+///     g_print ("Match successful! Overall pattern matches bytes `d` to `d`\n", start_pos, end_pos);
+///   }
+/// else
+///   {
+///     g_print ("No match!\n");
+///   }
+/// ```
+///
+/// The constructor for `GRegex` includes two sets of bitmapped flags:
+///
+/// * `glib.RegexCompileFlags`—These flags
+/// control how GLib compiles the regex. There are options for case
+/// sensitivity, multiline, ignoring whitespace, etc.
+/// * `glib.RegexMatchFlags`—These flags control
+/// `GRegex`’s matching behavior, such as anchoring and customizing definitions
+/// for newline characters.
+///
+/// Some regex patterns include backslash assertions, such as `\d` (digit) or
+/// `\D` (non-digit). The regex pattern must escape those backslashes. For
+/// example, the pattern `"\\d\\D"` matches a digit followed by a non-digit.
+///
+/// GLib’s implementation of pattern matching includes a `start_position`
+/// argument for some of the match, replace, and split methods. Specifying
+/// a start position provides flexibility when you want to ignore the first
+/// _n_ characters of a string, but want to incorporate backslash assertions
+/// at character _n_ - 1. For example, a database field contains inconsistent
+/// spelling for a job title: `healthcare provider` and `health-care provider`.
+/// The database manager wants to make the spelling consistent by adding a
+/// hyphen when it is missing. The following regex pattern tests for the string
+/// `care` preceded by a non-word boundary character (instead of a hyphen)
+/// and followed by a space.
+///
+/// ``` { .c }
+/// const char *regex_pattern = "\\Bcare\\s";
+/// ```
+///
+/// An efficient way to match with this pattern is to start examining at
+/// `start_position` 6 in the string `healthcare` or `health-care`.
+///
+/// ``` { .c }
+/// const char *regex_pattern = "\\Bcare\\s";
+/// const char *string_to_search = "healthcare provider";
+/// g_autoptr(GMatchInfo) match_info = NULL;
+/// g_autoptr(GRegex) regex = NULL;
+///
+/// regex = g_regex_new (
+///   regex_pattern,
+///   G_REGEX_DEFAULT,
+///   G_REGEX_MATCH_DEFAULT,
+///   NULL);
+/// g_assert (regex != NULL);
+///
+/// g_regex_match_full (
+///   regex,
+///   string_to_search,
+///   -1,
+///   6, // position of 'c' in the test string.
+///   G_REGEX_MATCH_DEFAULT,
+///   &match_info,
+///   NULL);
+/// ```
+///
+/// The method `glib.Regex.matchFull` (and other methods implementing
+/// `start_pos`) allow for lookback before the start position to determine if
+/// the previous character satisfies an assertion.
+///
+/// Unless you set the `glib.@"RegexCompileFlags.RAW"` as one of
+/// the `GRegexCompileFlags`, all the strings passed to `GRegex` methods must
+/// be encoded in UTF-8. The lengths and the positions inside the strings are
+/// in bytes and not in characters, so, for instance, `\xc3\xa0` (i.e., `à`)
+/// is two bytes long but it is treated as a single character. If you set
+/// `G_REGEX_RAW`, the strings can be non-valid UTF-8 strings and a byte is
+/// treated as a character, so `\xc3\xa0` is two bytes and two characters long.
+///
+/// Regarding line endings, `\n` matches a `\n` character, and `\r` matches
+/// a `\r` character. More generally, `\R` matches all typical line endings:
+/// CR + LF (`\r\n`), LF (linefeed, U+000A, `\n`), VT (vertical tab, U+000B,
+/// `\v`), FF (formfeed, U+000C, `\f`), CR (carriage return, U+000D, `\r`),
+/// NEL (next line, U+0085), LS (line separator, U+2028), and PS (paragraph
+/// separator, U+2029).
 ///
 /// The behaviour of the dot, circumflex, and dollar metacharacters are
-/// affected by newline characters, the default is to recognize any newline
-/// character (the same characters recognized by "\R"). This can be changed
-/// with `G_REGEX_NEWLINE_CR`, `G_REGEX_NEWLINE_LF` and `G_REGEX_NEWLINE_CRLF`
-/// compile options, and with `G_REGEX_MATCH_NEWLINE_ANY`,
-/// `G_REGEX_MATCH_NEWLINE_CR`, `G_REGEX_MATCH_NEWLINE_LF` and
-/// `G_REGEX_MATCH_NEWLINE_CRLF` match options. These settings are also
-/// relevant when compiling a pattern if `G_REGEX_EXTENDED` is set, and an
-/// unescaped "#" outside a character class is encountered. This indicates
-/// a comment that lasts until after the next newline.
+/// affected by newline characters. By default, `GRegex` matches any newline
+/// character matched by `\R`. You can limit the matched newline characters by
+/// specifying the `glib.@"RegexMatchFlags.NEWLINE_CR"`,
+/// `glib.@"RegexMatchFlags.NEWLINE_LF"`, and
+/// `glib.@"RegexMatchFlags.NEWLINE_CRLF"` compile options, and
+/// with `glib.@"RegexMatchFlags.NEWLINE_ANY"`,
+/// `glib.@"RegexMatchFlags.NEWLINE_CR"`,
+/// `glib.@"RegexMatchFlags.NEWLINE_LF"` and
+/// `glib.@"RegexMatchFlags.NEWLINE_CRLF"` match options.
+/// These settings are also relevant when compiling a pattern if
+/// `glib.@"RegexCompileFlags.EXTENDED"` is set and an unescaped
+/// `#` outside a character class is encountered. This indicates a comment
+/// that lasts until after the next newline.
 ///
-/// Creating and manipulating the same `GRegex` structure from different
-/// threads is not a problem as `GRegex` does not modify its internal
-/// state between creation and destruction, on the other hand `GMatchInfo`
-/// is not threadsafe.
+/// Because `GRegex` does not modify its internal state between creation and
+/// destruction, you can create and modify the same `GRegex` instance from
+/// different threads. In contrast, `glib.MatchInfo` is not thread safe.
 ///
-/// The regular expressions low-level functionalities are obtained through
+/// The regular expression low-level functionalities are obtained through
 /// the excellent [PCRE](http://www.pcre.org/) library written by Philip Hazel.
 pub const Regex = opaque {
     /// Checks whether `replacement` is a valid replacement string
@@ -8705,8 +9008,8 @@ pub const SList = extern struct {
 
     /// Adds a new element on to the end of the list.
     ///
-    /// The return value is the new start of the list, which may
-    /// have changed, so make sure you store the new value.
+    /// Note that the return value is the new start of the list
+    /// if `list` was empty; make sure you store the new value.
     ///
     /// Note that `glib.SList.append` has to traverse the entire list
     /// to find the end, which is inefficient when adding multiple
@@ -8892,8 +9195,8 @@ pub const SList = extern struct {
 
     /// Adds a new element on to the start of the list.
     ///
-    /// The return value is the new start of the list, which
-    /// may have changed, so make sure you store the new value.
+    /// Note that the return value is the new start of the list,
+    /// which will have changed, so make sure you store the new value.
     ///
     /// ```
     /// // Notice that it is initialized to the empty list.
@@ -9560,7 +9863,9 @@ pub const Source = extern struct {
     f_name: ?[*:0]u8,
     f_priv: ?*glib.SourcePrivate,
 
-    /// Removes the source with the given ID from the default main context. You must
+    /// Removes the source with the given ID from the default main context.
+    ///
+    /// You must
     /// use `glib.Source.destroy` for sources added to a non-default main context.
     ///
     /// The ID of a `glib.Source` is given by `glib.Source.getId`, or will be
@@ -9584,14 +9889,17 @@ pub const Source = extern struct {
     pub const remove = g_source_remove;
 
     /// Removes a source from the default main loop context given the
-    /// source functions and user data. If multiple sources exist with the
-    /// same source functions and user data, only one will be destroyed.
+    /// source functions and user data.
+    ///
+    /// If multiple sources exist with the same source functions and user data, only
+    /// one will be destroyed.
     extern fn g_source_remove_by_funcs_user_data(p_funcs: *glib.SourceFuncs, p_user_data: ?*anyopaque) c_int;
     pub const removeByFuncsUserData = g_source_remove_by_funcs_user_data;
 
     /// Removes a source from the default main loop context given the user
-    /// data for the callback. If multiple sources exist with the same user
-    /// data, only one will be destroyed.
+    /// data for the callback.
+    ///
+    /// If multiple sources exist with the same user data, only one will be destroyed.
     extern fn g_source_remove_by_user_data(p_user_data: ?*anyopaque) c_int;
     pub const removeByUserData = g_source_remove_by_user_data;
 
@@ -9614,7 +9922,9 @@ pub const Source = extern struct {
     extern fn g_source_set_name_by_id(p_tag: c_uint, p_name: [*:0]const u8) void;
     pub const setNameById = g_source_set_name_by_id;
 
-    /// Creates a new `glib.Source` structure. The size is specified to
+    /// Creates a new `glib.Source` structure.
+    ///
+    /// The size is specified to
     /// allow creating structures derived from `glib.Source` that contain
     /// additional data. The size passed in must be at least
     /// `sizeof (GSource)`.
@@ -9625,50 +9935,53 @@ pub const Source = extern struct {
     extern fn g_source_new(p_source_funcs: *glib.SourceFuncs, p_struct_size: c_uint) *glib.Source;
     pub const new = g_source_new;
 
-    /// Adds `child_source` to `source` as a "polled" source; when `source` is
-    /// added to a `glib.MainContext`, `child_source` will be automatically
-    /// added with the same priority, when `child_source` is triggered, it will
-    /// cause `source` to dispatch (in addition to calling its own
-    /// callback), and when `source` is destroyed, it will destroy
-    /// `child_source` as well. (`source` will also still be dispatched if
-    /// its own prepare/check functions indicate that it is ready.)
+    /// Adds `child_source` to `source` as a ‘polled’ source.
     ///
-    /// If you don't need `child_source` to do anything on its own when it
-    /// triggers, you can call `g_source_set_dummy_callback` on it to set a
-    /// callback that does nothing (except return `TRUE` if appropriate).
+    /// When `source` is added to a `glib.MainContext`, `child_source` will be
+    /// automatically added with the same priority. When `child_source` is triggered,
+    /// it will cause `source` to dispatch (in addition to calling its own callback),
+    /// and when `source` is destroyed, it will destroy `child_source` as well.
     ///
-    /// `source` will hold a reference on `child_source` while `child_source`
+    /// The `source` will also still be dispatched if its own prepare/check functions
+    /// indicate that it is ready.
+    ///
+    /// If you don’t need `child_source` to do anything on its own when it
+    /// triggers, you can call ``g_source_set_dummy_callback`` on it to set a
+    /// callback that does nothing (except return true if appropriate).
+    ///
+    /// The `source` will hold a reference on `child_source` while `child_source`
     /// is attached to it.
     ///
-    /// This API is only intended to be used by implementations of
-    /// `glib.Source`. Do not call this API on a `glib.Source` that
-    /// you did not create.
+    /// This API is only intended to be used by implementations of `glib.Source`.
+    /// Do not call this API on a `glib.Source` that you did not create.
     extern fn g_source_add_child_source(p_source: *Source, p_child_source: *glib.Source) void;
     pub const addChildSource = g_source_add_child_source;
 
     /// Adds a file descriptor to the set of file descriptors polled for
-    /// this source. This is usually combined with `glib.Source.new` to add an
-    /// event source. The event source's check function will typically test
-    /// the `revents` field in the `glib.PollFD` struct and return `TRUE` if events need
-    /// to be processed.
+    /// this source.
+    ///
+    /// This is usually combined with `glib.Source.new` to add an
+    /// event source. The event source’s check function will typically test
+    /// the `revents` field in the `glib.PollFD` struct and return true if
+    /// events need to be processed.
     ///
     /// This API is only intended to be used by implementations of `glib.Source`.
     /// Do not call this API on a `glib.Source` that you did not create.
     ///
     /// Using this API forces the linear scanning of event sources on each
     /// main loop iteration.  Newly-written event sources should try to use
-    /// `g_source_add_unix_fd` instead of this API.
+    /// ``glib.Source.addUnixFd`` instead of this API.
     extern fn g_source_add_poll(p_source: *Source, p_fd: *glib.PollFD) void;
     pub const addPoll = g_source_add_poll;
 
     /// Monitors `fd` for the IO events in `events`.
     ///
     /// The tag returned by this function can be used to remove or modify the
-    /// monitoring of the fd using `glib.Source.removeUnixFd` or
+    /// monitoring of the `fd` using `glib.Source.removeUnixFd` or
     /// `glib.Source.modifyUnixFd`.
     ///
-    /// It is not necessary to remove the fd before destroying the source; it
-    /// will be cleaned up automatically.
+    /// It is not necessary to remove the file descriptor before destroying the
+    /// source; it will be cleaned up automatically.
     ///
     /// This API is only intended to be used by implementations of `glib.Source`.
     /// Do not call this API on a `glib.Source` that you did not create.
@@ -9678,15 +9991,19 @@ pub const Source = extern struct {
     pub const addUnixFd = g_source_add_unix_fd;
 
     /// Adds a `glib.Source` to a `context` so that it will be executed within
-    /// that context. Remove it by calling `glib.Source.destroy`.
+    /// that context.
+    ///
+    /// Remove it by calling `glib.Source.destroy`.
     ///
     /// This function is safe to call from any thread, regardless of which thread
     /// the `context` is running in.
     extern fn g_source_attach(p_source: *Source, p_context: ?*glib.MainContext) c_uint;
     pub const attach = g_source_attach;
 
-    /// Removes a source from its `glib.MainContext`, if any, and mark it as
-    /// destroyed.  The source cannot be subsequently added to another
+    /// Removes a source from its `glib.MainContext`, if any, and marks it as
+    /// destroyed.
+    ///
+    /// The source cannot be subsequently added to another
     /// context. It is safe to call this on sources which have already been
     /// removed from their context.
     ///
@@ -9698,13 +10015,23 @@ pub const Source = extern struct {
     ///
     /// If the source is currently attached to a `glib.MainContext`,
     /// destroying it will effectively unset the callback similar to calling
-    /// `glib.Source.setCallback`. This can mean, that the data's
+    /// `glib.Source.setCallback`. This can mean, that the data’s
     /// `glib.DestroyNotify` gets called right away.
     extern fn g_source_destroy(p_source: *Source) void;
     pub const destroy = g_source_destroy;
 
+    /// Gets a reference to the `glib.MainContext` with which the source is
+    /// associated.
+    ///
+    /// You can call this on a source that has been destroyed. You can
+    /// always call this function on the source returned from
+    /// `glib.mainCurrentSource`.
+    extern fn g_source_dup_context(p_source: *Source) ?*glib.MainContext;
+    pub const dupContext = g_source_dup_context;
+
     /// Checks whether a source is allowed to be called recursively.
-    /// see `glib.Source.setCanRecurse`.
+    ///
+    /// See `glib.Source.setCanRecurse`.
     extern fn g_source_get_can_recurse(p_source: *Source) c_int;
     pub const getCanRecurse = g_source_get_can_recurse;
 
@@ -9716,6 +10043,10 @@ pub const Source = extern struct {
     /// always call this function on the source returned from
     /// `glib.mainCurrentSource`. But calling this function on a source
     /// whose `glib.MainContext` has been destroyed is an error.
+    ///
+    /// If the associated `glib.MainContext` could be destroy concurrently from
+    /// a different thread, then this function is not safe to call and
+    /// `glib.Source.dupContext` should be used instead.
     extern fn g_source_get_context(p_source: *Source) ?*glib.MainContext;
     pub const getContext = g_source_get_context;
 
@@ -9724,7 +10055,9 @@ pub const Source = extern struct {
     extern fn g_source_get_current_time(p_source: *Source, p_timeval: *glib.TimeVal) void;
     pub const getCurrentTime = g_source_get_current_time;
 
-    /// Returns the numeric ID for a particular source. The ID of a source
+    /// Returns the numeric ID for a particular source.
+    ///
+    /// The ID of a source
     /// is a positive integer which is unique within a particular main loop
     /// context. The reverse mapping from ID to source is done by
     /// `glib.MainContext.findSourceById`.
@@ -9737,7 +10070,9 @@ pub const Source = extern struct {
     extern fn g_source_get_id(p_source: *Source) c_uint;
     pub const getId = g_source_get_id;
 
-    /// Gets a name for the source, used in debugging and profiling.  The
+    /// Gets a name for the source, used in debugging and profiling.
+    ///
+    /// The
     /// name may be `NULL` if it has never been set with `glib.Source.setName`.
     extern fn g_source_get_name(p_source: *Source) ?[*:0]const u8;
     pub const getName = g_source_get_name;
@@ -9746,15 +10081,17 @@ pub const Source = extern struct {
     extern fn g_source_get_priority(p_source: *Source) c_int;
     pub const getPriority = g_source_get_priority;
 
-    /// Gets the "ready time" of `source`, as set by
+    /// Gets the ‘ready time’ of `source`, as set by
     /// `glib.Source.setReadyTime`.
     ///
-    /// Any time before or equal to the current monotonic time (including 0)
+    /// Any time before or equal to the current monotonic time (including zero)
     /// is an indication that the source will fire immediately.
     extern fn g_source_get_ready_time(p_source: *Source) i64;
     pub const getReadyTime = g_source_get_ready_time;
 
-    /// Gets the time to be used when checking this source. The advantage of
+    /// Gets the time to be used when checking this source.
+    ///
+    /// The advantage of
     /// calling this function over calling `glib.getMonotonicTime` directly is
     /// that when checking multiple sources, GLib can cache a single value
     /// instead of having to repeatedly get the system monotonic time.
@@ -9770,7 +10107,7 @@ pub const Source = extern struct {
     /// from within idle handlers, but may have freed the object
     /// before the dispatch of your idle handler.
     ///
-    /// ```
+    /// ```c
     /// static gboolean
     /// idle_callback (gpointer data)
     /// {
@@ -9820,7 +10157,7 @@ pub const Source = extern struct {
     /// this particular problem, is to check to if the source
     /// has already been destroy within the callback.
     ///
-    /// ```
+    /// ```c
     /// static gboolean
     /// idle_callback (gpointer data)
     /// {
@@ -9845,11 +10182,11 @@ pub const Source = extern struct {
     extern fn g_source_is_destroyed(p_source: *Source) c_int;
     pub const isDestroyed = g_source_is_destroyed;
 
-    /// Updates the event mask to watch for the fd identified by `tag`.
+    /// Updates the event mask to watch for the file descriptor identified by `tag`.
     ///
-    /// `tag` is the tag returned from `glib.Source.addUnixFd`.
+    /// The `tag` is the tag returned from `glib.Source.addUnixFd`.
     ///
-    /// If you want to remove a fd, don't set its event mask to zero.
+    /// If you want to remove a file descriptor, don’t set its event mask to zero.
     /// Instead, call `glib.Source.removeUnixFd`.
     ///
     /// This API is only intended to be used by implementations of `glib.Source`.
@@ -9859,8 +10196,8 @@ pub const Source = extern struct {
     extern fn g_source_modify_unix_fd(p_source: *Source, p_tag: *anyopaque, p_new_events: glib.IOCondition) void;
     pub const modifyUnixFd = g_source_modify_unix_fd;
 
-    /// Queries the events reported for the fd corresponding to `tag` on
-    /// `source` during the last poll.
+    /// Queries the events reported for the file descriptor corresponding to `tag`
+    /// on `source` during the last poll.
     ///
     /// The return value of this function is only defined when the function
     /// is called from the check or dispatch functions for `source`.
@@ -9893,7 +10230,7 @@ pub const Source = extern struct {
 
     /// Reverses the effect of a previous call to `glib.Source.addUnixFd`.
     ///
-    /// You only need to call this if you want to remove an fd from being
+    /// You only need to call this if you want to remove a file descriptor from being
     /// watched while keeping the same source around.  In the normal case you
     /// will just want to destroy the source.
     ///
@@ -9905,17 +10242,17 @@ pub const Source = extern struct {
     pub const removeUnixFd = g_source_remove_unix_fd;
 
     /// Sets the callback function for a source. The callback for a source is
-    /// called from the source's dispatch function.
+    /// called from the source’s dispatch function.
     ///
     /// The exact type of `func` depends on the type of source; ie. you
     /// should not count on `func` being called with `data` as its first
     /// parameter. Cast `func` with `glib.SOURCEFUNC` to avoid warnings about
     /// incompatible function types.
     ///
-    /// See [mainloop memory management](main-loop.html`memory`-management-of-sources) for details
+    /// See [main loop memory management](main-loop.html`memory`-management-of-sources) for details
     /// on how to handle memory management of `data`.
     ///
-    /// Typically, you won't use this function. Instead use functions specific
+    /// Typically, you won’t use this function. Instead use functions specific
     /// to the type of source you are using, such as `glib.idleAdd` or
     /// `glib.timeoutAdd`.
     ///
@@ -9928,12 +10265,14 @@ pub const Source = extern struct {
     extern fn g_source_set_callback(p_source: *Source, p_func: glib.SourceFunc, p_data: ?*anyopaque, p_notify: ?glib.DestroyNotify) void;
     pub const setCallback = g_source_set_callback;
 
-    /// Sets the callback function storing the data as a refcounted callback
-    /// "object". This is used internally. Note that calling
+    /// Sets the callback function storing the data as a reference counted callback
+    /// ‘object’.
+    ///
+    /// This is used internally. Note that calling
     /// `glib.Source.setCallbackIndirect` assumes
     /// an initial reference count on `callback_data`, and thus
-    /// `callback_funcs`->unref will eventually be called once more
-    /// than `callback_funcs`->ref.
+    /// `callback_funcs->unref` will eventually be called once more than
+    /// `callback_funcs->ref`.
     ///
     /// It is safe to call this function multiple times on a source which has already
     /// been attached to a context. The changes will take effect for the next time
@@ -9941,49 +10280,57 @@ pub const Source = extern struct {
     extern fn g_source_set_callback_indirect(p_source: *Source, p_callback_data: ?*anyopaque, p_callback_funcs: *glib.SourceCallbackFuncs) void;
     pub const setCallbackIndirect = g_source_set_callback_indirect;
 
-    /// Sets whether a source can be called recursively. If `can_recurse` is
-    /// `TRUE`, then while the source is being dispatched then this source
-    /// will be processed normally. Otherwise, all processing of this
+    /// Sets whether a source can be called recursively.
+    ///
+    /// If `can_recurse` is true, then while the source is being dispatched then this
+    /// source will be processed normally. Otherwise, all processing of this
     /// source is blocked until the dispatch function returns.
     extern fn g_source_set_can_recurse(p_source: *Source, p_can_recurse: c_int) void;
     pub const setCanRecurse = g_source_set_can_recurse;
 
-    /// Set `dispose` as dispose function on `source`. `dispose` will be called once
-    /// the reference count of `source` reaches 0 but before any of the state of the
-    /// source is freed, especially before the finalize function is called.
+    /// Set `dispose` as dispose function on `source`.
+    ///
+    /// The `dispose` function will be called once the reference count of `source`
+    /// reaches zero but before any of the state of the source is freed, especially
+    /// before the finalize function (set as part of the `glib.SourceFuncs`) is
+    /// called.
     ///
     /// This means that at this point `source` is still a valid `glib.Source`
     /// and it is allow for the reference count to increase again until `dispose`
     /// returns.
     ///
-    /// The dispose function can be used to clear any "weak" references to the
-    /// `source` in other data structures in a thread-safe way where it is possible
-    /// for another thread to increase the reference count of `source` again while
-    /// it is being freed.
+    /// The dispose function can be used to clear any ‘weak’ references to
+    /// the `source` in other data structures in a thread-safe way where it is
+    /// possible for another thread to increase the reference count of `source` again
+    /// while it is being freed.
     ///
-    /// The finalize function can not be used for this purpose as at that point
-    /// `source` is already partially freed and not valid anymore.
+    /// The finalize function can not be used for this purpose as at that
+    /// point `source` is already partially freed and not valid any more.
     ///
     /// This should only ever be called from `glib.Source` implementations.
     extern fn g_source_set_dispose_function(p_source: *Source, p_dispose: glib.SourceDisposeFunc) void;
     pub const setDisposeFunction = g_source_set_dispose_function;
 
-    /// Sets the source functions (can be used to override
-    /// default implementations) of an unattached source.
+    /// Sets the source functions of an unattached source.
+    ///
+    /// These can be used to override the default implementations for the type
+    /// of `source`.
     extern fn g_source_set_funcs(p_source: *Source, p_funcs: *glib.SourceFuncs) void;
     pub const setFuncs = g_source_set_funcs;
 
     /// Sets a name for the source, used in debugging and profiling.
+    ///
     /// The name defaults to `NULL`.
     ///
     /// The source name should describe in a human-readable way
-    /// what the source does. For example, "X11 event queue"
-    /// or "GTK repaint idle handler" or whatever it is.
+    /// what the source does. For example, ‘X11 event queue’
+    /// or ‘GTK repaint idle handler’.
     ///
     /// It is permitted to call this function multiple times, but is not
     /// recommended due to the potential performance impact.  For example,
-    /// one could change the name in the "check" function of a `glib.SourceFuncs`
-    /// to include details like the event type in the source name.
+    /// one could change the name in the `check` function of a
+    /// `glib.SourceFuncs` to include details like the event type in the
+    /// source name.
     ///
     /// Use caution if changing the name while another thread may be
     /// accessing it with `glib.Source.getName`; that function does not copy
@@ -9994,7 +10341,9 @@ pub const Source = extern struct {
     extern fn g_source_set_name(p_source: *Source, p_name: [*:0]const u8) void;
     pub const setName = g_source_set_name;
 
-    /// Sets the priority of a source. While the main loop is being run, a
+    /// Sets the priority of a source.
+    ///
+    /// While the main loop is being run, a
     /// source will be dispatched if it is ready to be dispatched and no
     /// sources at a higher (numerically smaller) priority are ready to be
     /// dispatched.
@@ -10005,12 +10354,14 @@ pub const Source = extern struct {
     extern fn g_source_set_priority(p_source: *Source, p_priority: c_int) void;
     pub const setPriority = g_source_set_priority;
 
-    /// Sets a `glib.Source` to be dispatched when the given monotonic time is
-    /// reached (or passed).  If the monotonic time is in the past (as it
-    /// always will be if `ready_time` is 0) then the source will be
+    /// Sets a source to be dispatched when the given monotonic time is
+    /// reached (or passed).
+    ///
+    /// If the monotonic time is in the past (as it
+    /// always will be if `ready_time` is `0`) then the source will be
     /// dispatched immediately.
     ///
-    /// If `ready_time` is -1 then the source is never woken up on the basis
+    /// If `ready_time` is `-1` then the source is never woken up on the basis
     /// of the passage of time.
     ///
     /// Dispatching the source does not reset the ready time.  You should do
@@ -10022,8 +10373,8 @@ pub const Source = extern struct {
     /// for both sources is reached during the same main context iteration,
     /// then the order of dispatch is undefined.
     ///
-    /// It is a no-op to call this function on a `glib.Source` which has already been
-    /// destroyed with `glib.Source.destroy`.
+    /// It is a no-op to call this function on a `glib.Source` which has
+    /// already been destroyed with `glib.Source.destroy`.
     ///
     /// This API is only intended to be used by implementations of `glib.Source`.
     /// Do not call this API on a `glib.Source` that you did not create.
@@ -10036,8 +10387,9 @@ pub const Source = extern struct {
     extern fn g_source_set_static_name(p_source: *Source, p_name: [*:0]const u8) void;
     pub const setStaticName = g_source_set_static_name;
 
-    /// Decreases the reference count of a source by one. If the
-    /// resulting reference count is zero the source and associated
+    /// Decreases the reference count of a source by one.
+    ///
+    /// If the resulting reference count is zero the source and associated
     /// memory will be destroyed.
     extern fn g_source_unref(p_source: *Source) void;
     pub const unref = g_source_unref;
@@ -10089,8 +10441,8 @@ pub const SourceCallbackFuncs = extern struct {
 /// check function, it tests the results of the `poll` call to see if the
 /// required condition has been met, and returns `TRUE` if so.
 pub const SourceFuncs = extern struct {
-    /// Called before all the file descriptors are polled. If the
-    ///     source can determine that it is ready here (without waiting for the
+    /// Called before all the file descriptors are polled. If
+    ///     the source can determine that it is ready here (without waiting for the
     ///     results of the `poll` call) it should return `TRUE`. It can also return
     ///     a `timeout_` value which should be the maximum timeout (in milliseconds)
     ///     which should be passed to the `poll` call. The actual timeout used will
@@ -10101,9 +10453,9 @@ pub const SourceFuncs = extern struct {
     ///     timeout and the source also has a ready time set, then the
     ///     lower of the two will be used.
     f_prepare: ?glib.SourceFuncsPrepareFunc,
-    /// Called after all the file descriptors are polled. The source
-    ///     should return `TRUE` if it is ready to be dispatched. Note that some
-    ///     time may have passed since the previous prepare function was called,
+    /// Called after all the file descriptors are polled. The
+    ///     source should return `TRUE` if it is ready to be dispatched. Note that
+    ///     some time may have passed since the previous prepare function was called,
     ///     so the source should be checked again here.  Since 2.36 this may
     ///     be `NULL`, in which case the effect is as if the function always returns
     ///     `FALSE`.
@@ -10119,11 +10471,12 @@ pub const SourceFuncs = extern struct {
     ///     `glib.SOURCE_REMOVE` if the source should be removed or
     ///     `glib.SOURCE_CONTINUE` to keep it.
     f_dispatch: ?glib.SourceFuncsDispatchFunc,
-    /// Called when the source is finalized. At this point, the source
-    ///     will have been destroyed, had its callback cleared, and have been removed
-    ///     from its `glib.MainContext`, but it will still have its final
-    ///     reference count, so methods can be called on it from within this
-    ///     function.
+    /// Called when the source is finalized. At this point,
+    ///     the source will have been destroyed, had its callback cleared, and have
+    ///     been removed from its `glib.MainContext`, but it will still have
+    ///     its final reference count, so methods can be called on it from within
+    ///     this function. This may be `NULL`, in which case the effect is as if the
+    ///     function does nothing and returns.
     f_finalize: ?glib.SourceFuncsFinalizeFunc,
     f_closure_callback: ?glib.SourceFunc,
     f_closure_marshal: ?glib.SourceDummyMarshal,
@@ -10569,7 +10922,7 @@ pub const String = extern struct {
     /// Creates a new `glib.String`, initialized with the given string.
     ///
     /// After this call, `init` belongs to the `glib.String` and may no longer be
-    /// modified by the caller. The memory of `data` has to be dynamically
+    /// modified by the caller. The memory of `init` has to be dynamically
     /// allocated and will eventually be freed with `glib.free`.
     extern fn g_string_new_take(p_init: ?[*:0]u8) *glib.String;
     pub const newTake = g_string_new_take;
@@ -10640,6 +10993,13 @@ pub const String = extern struct {
     /// have to worry about having enough space to copy the string.
     extern fn g_string_assign(p_string: *String, p_rval: [*:0]const u8) *glib.String;
     pub const assign = g_string_assign;
+
+    /// Copies the `glib.String` instance and its contents.
+    ///
+    /// This will preserve the allocation length of the `glib.String` in the
+    /// copy.
+    extern fn g_string_copy(p_string: *String) *glib.String;
+    pub const copy = g_string_copy;
 
     /// Converts a `glib.String` to lowercase.
     extern fn g_string_down(p_string: *String) *glib.String;
@@ -14265,9 +14625,6 @@ pub const Variant = opaque {
     /// drops to 0, the memory used by the variant is freed.
     extern fn g_variant_unref(p_value: *Variant) void;
     pub const unref = g_variant_unref;
-
-    extern fn intern() usize;
-    pub const getGObjectType = intern;
 
     test {
         @setEvalBranchQuota(100_000);
@@ -18228,7 +18585,7 @@ pub const atexit = g_atexit;
 ///
 /// While `atomic` has a `volatile` qualifier, this is a historical artifact and
 /// the pointer passed to it should not be `volatile`.
-extern fn g_atomic_int_add(p_atomic: *c_int, p_val: c_int) c_int;
+extern fn g_atomic_int_add(p_atomic: ?*anyopaque, p_val: c_int) c_int;
 pub const atomicIntAdd = g_atomic_int_add;
 
 /// Performs an atomic bitwise 'and' of the value of `atomic` and `val`,
@@ -18241,7 +18598,7 @@ pub const atomicIntAdd = g_atomic_int_add;
 ///
 /// While `atomic` has a `volatile` qualifier, this is a historical artifact and
 /// the pointer passed to it should not be `volatile`.
-extern fn g_atomic_int_and(p_atomic: *c_uint, p_val: c_uint) c_uint;
+extern fn g_atomic_int_and(p_atomic: ?*anyopaque, p_val: c_uint) c_uint;
 pub const atomicIntAnd = g_atomic_int_and;
 
 /// Compares `atomic` to `oldval` and, if equal, sets it to `newval`.
@@ -18256,7 +18613,7 @@ pub const atomicIntAnd = g_atomic_int_and;
 ///
 /// While `atomic` has a `volatile` qualifier, this is a historical artifact and
 /// the pointer passed to it should not be `volatile`.
-extern fn g_atomic_int_compare_and_exchange(p_atomic: *c_int, p_oldval: c_int, p_newval: c_int) c_int;
+extern fn g_atomic_int_compare_and_exchange(p_atomic: ?*anyopaque, p_oldval: c_int, p_newval: c_int) c_int;
 pub const atomicIntCompareAndExchange = g_atomic_int_compare_and_exchange;
 
 /// Compares `atomic` to `oldval` and, if equal, sets it to `newval`.
@@ -18271,7 +18628,7 @@ pub const atomicIntCompareAndExchange = g_atomic_int_compare_and_exchange;
 /// This call acts as a full compiler and hardware memory barrier.
 ///
 /// See also `glib.atomicIntCompareAndExchange`
-extern fn g_atomic_int_compare_and_exchange_full(p_atomic: *c_int, p_oldval: c_int, p_newval: c_int, p_preval: *c_int) c_int;
+extern fn g_atomic_int_compare_and_exchange_full(p_atomic: ?*anyopaque, p_oldval: c_int, p_newval: c_int, p_preval: *c_int) c_int;
 pub const atomicIntCompareAndExchangeFull = g_atomic_int_compare_and_exchange_full;
 
 /// Decrements the value of `atomic` by 1.
@@ -18283,7 +18640,7 @@ pub const atomicIntCompareAndExchangeFull = g_atomic_int_compare_and_exchange_fu
 ///
 /// While `atomic` has a `volatile` qualifier, this is a historical artifact and
 /// the pointer passed to it should not be `volatile`.
-extern fn g_atomic_int_dec_and_test(p_atomic: *c_int) c_int;
+extern fn g_atomic_int_dec_and_test(p_atomic: ?*anyopaque) c_int;
 pub const atomicIntDecAndTest = g_atomic_int_dec_and_test;
 
 /// Sets the `atomic` to `newval` and returns the old value from `atomic`.
@@ -18294,13 +18651,13 @@ pub const atomicIntDecAndTest = g_atomic_int_dec_and_test;
 /// `{ tmp = *atomic; *atomic = val; return tmp; }`.
 ///
 /// This call acts as a full compiler and hardware memory barrier.
-extern fn g_atomic_int_exchange(p_atomic: *c_int, p_newval: c_int) c_int;
+extern fn g_atomic_int_exchange(p_atomic: ?*anyopaque, p_newval: c_int) c_int;
 pub const atomicIntExchange = g_atomic_int_exchange;
 
 /// This function existed before `glib.atomicIntAdd` returned the prior
 /// value of the integer (which it now does).  It is retained only for
 /// compatibility reasons.  Don't use this function in new code.
-extern fn g_atomic_int_exchange_and_add(p_atomic: *c_int, p_val: c_int) c_int;
+extern fn g_atomic_int_exchange_and_add(p_atomic: ?*anyopaque, p_val: c_int) c_int;
 pub const atomicIntExchangeAndAdd = g_atomic_int_exchange_and_add;
 
 /// Gets the current value of `atomic`.
@@ -18310,7 +18667,7 @@ pub const atomicIntExchangeAndAdd = g_atomic_int_exchange_and_add;
 ///
 /// While `atomic` has a `volatile` qualifier, this is a historical artifact and
 /// the pointer passed to it should not be `volatile`.
-extern fn g_atomic_int_get(p_atomic: *c_int) c_int;
+extern fn g_atomic_int_get(p_atomic: ?*anyopaque) c_int;
 pub const atomicIntGet = g_atomic_int_get;
 
 /// Increments the value of `atomic` by 1.
@@ -18321,7 +18678,7 @@ pub const atomicIntGet = g_atomic_int_get;
 ///
 /// While `atomic` has a `volatile` qualifier, this is a historical artifact and
 /// the pointer passed to it should not be `volatile`.
-extern fn g_atomic_int_inc(p_atomic: *c_int) void;
+extern fn g_atomic_int_inc(p_atomic: ?*anyopaque) void;
 pub const atomicIntInc = g_atomic_int_inc;
 
 /// Performs an atomic bitwise 'or' of the value of `atomic` and `val`,
@@ -18334,7 +18691,7 @@ pub const atomicIntInc = g_atomic_int_inc;
 ///
 /// While `atomic` has a `volatile` qualifier, this is a historical artifact and
 /// the pointer passed to it should not be `volatile`.
-extern fn g_atomic_int_or(p_atomic: *c_uint, p_val: c_uint) c_uint;
+extern fn g_atomic_int_or(p_atomic: ?*anyopaque, p_val: c_uint) c_uint;
 pub const atomicIntOr = g_atomic_int_or;
 
 /// Sets the value of `atomic` to `newval`.
@@ -18344,7 +18701,7 @@ pub const atomicIntOr = g_atomic_int_or;
 ///
 /// While `atomic` has a `volatile` qualifier, this is a historical artifact and
 /// the pointer passed to it should not be `volatile`.
-extern fn g_atomic_int_set(p_atomic: *c_int, p_newval: c_int) void;
+extern fn g_atomic_int_set(p_atomic: ?*anyopaque, p_newval: c_int) void;
 pub const atomicIntSet = g_atomic_int_set;
 
 /// Performs an atomic bitwise 'xor' of the value of `atomic` and `val`,
@@ -18357,7 +18714,7 @@ pub const atomicIntSet = g_atomic_int_set;
 ///
 /// While `atomic` has a `volatile` qualifier, this is a historical artifact and
 /// the pointer passed to it should not be `volatile`.
-extern fn g_atomic_int_xor(p_atomic: *c_uint, p_val: c_uint) c_uint;
+extern fn g_atomic_int_xor(p_atomic: ?*anyopaque, p_val: c_uint) c_uint;
 pub const atomicIntXor = g_atomic_int_xor;
 
 /// Atomically adds `val` to the value of `atomic`.
@@ -18645,8 +19002,16 @@ pub const basename = g_basename;
 /// `address` must be atomic in order for this function to work
 /// reliably. While `address` has a `volatile` qualifier, this is a historical
 /// artifact and the argument passed to it should not be `volatile`.
-extern fn g_bit_lock(p_address: *c_int, p_lock_bit: c_int) void;
+extern fn g_bit_lock(p_address: ?*anyopaque, p_lock_bit: c_int) void;
 pub const bitLock = g_bit_lock;
+
+/// Sets the indicated `lock_bit` in `address` and atomically returns the new value.
+///
+/// This is like `glib.bitLock`, except it can atomically return the new value at
+/// `address` (right after obtaining the lock). Thus the value returned in `out_val`
+/// always has the `lock_bit` set.
+extern fn g_bit_lock_and_get(p_address: ?*anyopaque, p_lock_bit: c_uint, p_out_val: ?*c_int) void;
+pub const bitLockAndGet = g_bit_lock_and_get;
 
 /// Find the position of the first bit set in `mask`, searching
 /// from (but not including) `nth_bit` upwards. Bits are numbered
@@ -18681,7 +19046,7 @@ pub const bitStorage = g_bit_storage;
 /// `address` must be atomic in order for this function to work
 /// reliably. While `address` has a `volatile` qualifier, this is a historical
 /// artifact and the argument passed to it should not be `volatile`.
-extern fn g_bit_trylock(p_address: *c_int, p_lock_bit: c_int) c_int;
+extern fn g_bit_trylock(p_address: ?*anyopaque, p_lock_bit: c_int) c_int;
 pub const bitTrylock = g_bit_trylock;
 
 /// Clears the indicated `lock_bit` in `address`.  If another thread is
@@ -18692,8 +19057,19 @@ pub const bitTrylock = g_bit_trylock;
 /// `address` must be atomic in order for this function to work
 /// reliably. While `address` has a `volatile` qualifier, this is a historical
 /// artifact and the argument passed to it should not be `volatile`.
-extern fn g_bit_unlock(p_address: *c_int, p_lock_bit: c_int) void;
+extern fn g_bit_unlock(p_address: ?*anyopaque, p_lock_bit: c_int) void;
 pub const bitUnlock = g_bit_unlock;
+
+/// This is like `glib.bitUnlock` but also atomically sets `address` to
+/// `val`.
+///
+/// If `preserve_mask` is not zero, then the `preserve_mask` bits will be
+/// preserved in `address` and are not set to `val`.
+///
+/// Note that the `lock_bit` bit will always be unset regardless of
+/// `val`, `preserve_mask` and the currently set value in `address`.
+extern fn g_bit_unlock_and_set(p_address: ?*anyopaque, p_lock_bit: c_uint, p_new_val: c_int, p_preserve_mask: c_int) void;
+pub const bitUnlockAndSet = g_bit_unlock_and_set;
 
 extern fn g_blow_chunks() void;
 pub const blowChunks = g_blow_chunks;
@@ -18827,15 +19203,15 @@ pub const checkVersion = glib_check_version;
 ///
 /// If you obtain `pid` from `glib.spawnAsync` or
 /// `glib.spawnAsyncWithPipes` you will need to pass
-/// `G_SPAWN_DO_NOT_REAP_CHILD` as flag to the spawn function for the child
-/// watching to work.
+/// `glib.@"SpawnFlags.DO_NOT_REAP_CHILD"` as a flag to the spawn function for
+/// the child watching to work.
 ///
 /// Note that on platforms where `glib.Pid` must be explicitly closed
 /// (see `glib.spawnClosePid`) `pid` must not be closed while the
 /// source is still active. Typically, you will want to call
 /// `glib.spawnClosePid` in the callback function for the source.
 ///
-/// GLib supports only a single callback per process id.
+/// GLib supports only a single callback per process ID.
 /// On POSIX platforms, the same restrictions mentioned for
 /// `glib.childWatchSourceNew` apply to this function.
 ///
@@ -18851,8 +19227,8 @@ pub const childWatchAdd = g_child_watch_add;
 ///
 /// If you obtain `pid` from `glib.spawnAsync` or
 /// `glib.spawnAsyncWithPipes` you will need to pass
-/// `G_SPAWN_DO_NOT_REAP_CHILD` as flag to the spawn function for the child
-/// watching to work.
+/// `glib.@"SpawnFlags.DO_NOT_REAP_CHILD"` as a flag to the spawn function for
+/// the child watching to work.
 ///
 /// In many programs, you will want to call `glib.spawnCheckWaitStatus`
 /// in the callback to determine whether or not the child exited
@@ -18863,7 +19239,7 @@ pub const childWatchAdd = g_child_watch_add;
 /// is still active.  Typically, you should invoke `glib.spawnClosePid`
 /// in the callback function for the source.
 ///
-/// GLib supports only a single callback per process id.
+/// GLib supports only a single callback per process ID.
 /// On POSIX platforms, the same restrictions mentioned for
 /// `glib.childWatchSourceNew` apply to this function.
 ///
@@ -18874,14 +19250,14 @@ pub const childWatchAdd = g_child_watch_add;
 extern fn g_child_watch_add_full(p_priority: c_int, p_pid: glib.Pid, p_function: glib.ChildWatchFunc, p_data: ?*anyopaque, p_notify: ?glib.DestroyNotify) c_uint;
 pub const childWatchAddFull = g_child_watch_add_full;
 
-/// Creates a new child_watch source.
+/// Creates a new child watch source.
 ///
 /// The source will not initially be associated with any
 /// `glib.MainContext` and must be added to one with
 /// `glib.Source.attach` before it will be executed.
 ///
 /// Note that child watch sources can only be used in conjunction with
-/// `g_spawn...` when the `G_SPAWN_DO_NOT_REAP_CHILD` flag is used.
+/// `g_spawn...` when the `glib.@"SpawnFlags.DO_NOT_REAP_CHILD"` flag is used.
 ///
 /// Note that on platforms where `glib.Pid` must be explicitly closed
 /// (see `glib.spawnClosePid`) `pid` must not be closed while the
@@ -18891,29 +19267,29 @@ pub const childWatchAddFull = g_child_watch_add_full;
 /// On POSIX platforms, the following restrictions apply to this API
 /// due to limitations in POSIX process interfaces:
 ///
-/// * `pid` must be a child of this process
-/// * `pid` must be positive
-/// * the application must not call `waitpid` with a non-positive
-///   first argument, for instance in another thread
-/// * the application must not wait for `pid` to exit by any other
+/// * `pid` must be a child of this process.
+/// * `pid` must be positive.
+/// * The application must not call [``waitpid``](man:waitpid(1)) with a
+///   non-positive first argument, for instance in another thread.
+/// * The application must not wait for `pid` to exit by any other
 ///   mechanism, including `waitpid(pid, ...)` or a second child-watch
-///   source for the same `pid`
-/// * the application must not ignore `SIGCHLD`
-/// * Before 2.78, the application could not send a signal (``kill``) to the
+///   source for the same `pid`.
+/// * The application must not ignore `SIGCHLD`.
+/// * Before 2.78, the application could not send a signal ([``kill``](man:kill(2))) to the
 ///   watched `pid` in a race free manner. Since 2.78, you can do that while the
 ///   associated `glib.MainContext` is acquired.
 /// * Before 2.78, even after destroying the `glib.Source`, you could not
-///   be sure that `pid` wasn't already reaped. Hence, it was also not
+///   be sure that `pid` wasn’t already reaped. Hence, it was also not
 ///   safe to ``kill`` or ``waitpid`` on the process ID after the child watch
 ///   source was gone. Destroying the source before it fired made it
 ///   impossible to reliably reap the process.
 ///
 /// If any of those conditions are not met, this and related APIs will
 /// not work correctly. This can often be diagnosed via a GLib warning
-/// stating that `ECHILD` was received by `waitpid`.
+/// stating that `ECHILD` was received by ``waitpid``.
 ///
-/// Calling `waitpid` for specific processes other than `pid` remains a
-/// valid thing to do.
+/// Calling [``waitpid``](man:waitpid(2)) for specific processes other than `pid`
+/// remains a valid thing to do.
 extern fn g_child_watch_source_new(p_pid: glib.Pid) *glib.Source;
 pub const childWatchSourceNew = g_child_watch_source_new;
 
@@ -18937,7 +19313,7 @@ pub const clearError = g_clear_error;
 
 /// Clears a numeric handler, such as a `glib.Source` ID.
 ///
-/// `tag_ptr` must be a valid pointer to the variable holding the handler.
+/// The `tag_ptr` must be a valid pointer to the variable holding the handler.
 ///
 /// If the ID is zero then this function does nothing.
 /// Otherwise, `clear_func` is called with the ID as a parameter, and the tag is
@@ -19581,8 +19957,8 @@ pub const fileSetContents = g_file_set_contents;
 /// to 7 characters to `filename`.
 ///
 /// If the file didn’t exist before and is created, it will be given the
-/// permissions from `mode`. Otherwise, the permissions of the existing file may
-/// be changed to `mode` depending on `flags`, or they may remain unchanged.
+/// permissions from `mode`. Otherwise, the permissions of the existing file will
+/// remain unchanged.
 extern fn g_file_set_contents_full(p_filename: [*:0]const u8, p_contents: [*]const u8, p_length: isize, p_flags: glib.FileSetContentsFlags, p_mode: c_int, p_error: ?*?*glib.Error) c_int;
 pub const fileSetContentsFull = g_file_set_contents_full;
 
@@ -19764,6 +20140,13 @@ pub const findProgramInPath = g_find_program_in_path;
 /// currently impossible to close a file if the application C library and the C library
 /// used by GLib are different. Convenience functions like `glib.fileSetContentsFull`
 /// avoid this problem.
+///
+/// Since GLib 2.86, the `e` option is supported in `mode` on all platforms. On
+/// Unix platforms it will set `O_CLOEXEC` on the opened file descriptor. On
+/// Windows platforms it will be converted to the
+/// [`N` modifier](https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/fopen-wfopen?view=msvc-170).
+/// It is recommended to set `e` unconditionally, unless you know the returned
+/// file should be shared between this process and a new fork.
 extern fn g_fopen(p_filename: [*:0]const u8, p_mode: [*:0]const u8) ?*anyopaque;
 pub const fopen = g_fopen;
 
@@ -19843,6 +20226,9 @@ pub const freeSized = g_free_sized;
 /// opens a file and associates it with an existing stream.
 ///
 /// See your C library manual for more details about `freopen`.
+///
+/// Since GLib 2.86, the `e` option is supported in `mode` on all platforms. See
+/// the documentation for `glib.fopen` for more details.
 extern fn g_freopen(p_filename: [*:0]const u8, p_mode: [*:0]const u8, p_stream: ?*anyopaque) ?*anyopaque;
 pub const freopen = g_freopen;
 
@@ -19928,7 +20314,10 @@ pub const getConsoleCharset = g_get_console_charset;
 extern fn g_get_current_dir() [*:0]u8;
 pub const getCurrentDir = g_get_current_dir;
 
-/// Equivalent to the UNIX `gettimeofday` function, but portable.
+/// Queries the system wall-clock time.
+///
+/// This is equivalent to the UNIX [``gettimeofday``](man:gettimeofday(2))
+/// function, but portable.
 ///
 /// You may find `glib.getRealTime` to be more convenient.
 extern fn g_get_current_time(p_result: *glib.TimeVal) void;
@@ -20061,13 +20450,14 @@ pub const getLocaleVariants = g_get_locale_variants;
 
 /// Queries the system monotonic time.
 ///
-/// The monotonic clock will always increase and doesn't suffer
+/// The monotonic clock will always increase and doesn’t suffer
 /// discontinuities when the user (or NTP) changes the system time.  It
 /// may or may not continue to tick during times where the machine is
 /// suspended.
 ///
 /// We try to use the clock that corresponds as closely as possible to
-/// the passage of time as measured by system calls such as `poll` but it
+/// the passage of time as measured by system calls such as
+/// [``poll``](man:poll(2)) but it
 /// may not always be possible to do this.
 extern fn g_get_monotonic_time() i64;
 pub const getMonotonicTime = g_get_monotonic_time;
@@ -20111,9 +20501,8 @@ pub const getRealName = g_get_real_name;
 
 /// Queries the system wall-clock time.
 ///
-/// This call is functionally equivalent to `glib.getCurrentTime` except
-/// that the return value is often more convenient than dealing with a
-/// `glib.TimeVal`.
+/// This is equivalent to the UNIX [``gettimeofday``](man:gettimeofday(2))
+/// function, but portable.
 ///
 /// You should only use this call if you are actually interested in the real
 /// wall-clock time. `glib.getMonotonicTime` is probably more useful for
@@ -20387,12 +20776,14 @@ extern fn g_iconv(p_converter: glib.IConv, p_inbuf: *[*:0]u8, p_inbytes_left: *u
 pub const iconv = g_iconv;
 
 /// Adds a function to be called whenever there are no higher priority
-/// events pending to the default main loop. The function is given the
-/// default idle priority, `glib.PRIORITY_DEFAULT_IDLE`.  If the function
-/// returns `FALSE` it is automatically removed from the list of event
-/// sources and will not be called again.
+/// events pending to the default main loop.
 ///
-/// See [mainloop memory management](main-loop.html`memory`-management-of-sources) for details
+/// The function is given the
+/// default idle priority, `glib.PRIORITY_DEFAULT_IDLE`.  If the function
+/// returns `glib.SOURCE_REMOVE` it is automatically removed from the list
+/// of event sources and will not be called again.
+///
+/// See [main loop memory management](main-loop.html`memory`-management-of-sources) for details
 /// on how to handle the return value and memory management of `data`.
 ///
 /// This internally creates a main loop source using `glib.idleSourceNew`
@@ -20406,10 +20797,10 @@ pub const idleAdd = g_idle_add;
 /// Adds a function to be called whenever there are no higher priority
 /// events pending.
 ///
-/// If the function returns `glib.SOURCE_REMOVE` or `FALSE` it is automatically
+/// If the function returns `glib.SOURCE_REMOVE` it is automatically
 /// removed from the list of event sources and will not be called again.
 ///
-/// See [mainloop memory management](main-loop.html`memory`-management-of-sources) for details
+/// See [main loop memory management](main-loop.html`memory`-management-of-sources) for details
 /// on how to handle the return value and memory management of `data`.
 ///
 /// This internally creates a main loop source using `glib.idleSourceNew`
@@ -20421,7 +20812,9 @@ extern fn g_idle_add_full(p_priority: c_int, p_function: glib.SourceFunc, p_data
 pub const idleAddFull = g_idle_add_full;
 
 /// Adds a function to be called whenever there are no higher priority
-/// events pending to the default main loop. The function is given the
+/// events pending to the default main loop.
+///
+/// The function is given the
 /// default idle priority, `glib.PRIORITY_DEFAULT_IDLE`.
 ///
 /// The function will only be called once and then the source will be
@@ -20622,6 +21015,37 @@ pub const log = g_log;
 extern fn g_log_default_handler(p_log_domain: ?[*:0]const u8, p_log_level: glib.LogLevelFlags, p_message: ?[*:0]const u8, p_unused_data: ?*anyopaque) void;
 pub const logDefaultHandler = g_log_default_handler;
 
+/// Gets the current fatal mask.
+///
+/// This is mostly used by custom log writers to make fatal messages
+/// (`fatal-warnings`, `fatal-criticals`) work as expected, when using the
+/// `G_DEBUG` environment variable (see [Running GLib Applications](running.html)).
+///
+/// An example usage is shown below:
+///
+/// ```c
+/// static GLogWriterOutput
+/// my_custom_log_writer_fn (GLogLevelFlags log_level,
+///                          const GLogField *fields,
+///                          gsize n_fields,
+///                          gpointer user_data)
+/// {
+///
+///    // abort if the message was fatal
+///    if (log_level & g_log_get_always_fatal ())
+///      g_abort ();
+///
+///    // custom log handling code
+///    ...
+///    ...
+///
+///    // success
+///    return G_LOG_WRITER_HANDLED;
+/// }
+/// ```
+extern fn g_log_get_always_fatal() glib.LogLevelFlags;
+pub const logGetAlwaysFatal = g_log_get_always_fatal;
+
 /// Return whether debug output from the GLib logging system is enabled.
 ///
 /// Note that this should not be used to conditionalise calls to `glib.debug` or
@@ -20649,7 +21073,7 @@ pub const logRemoveHandler = g_log_remove_handler;
 ///
 /// You can also make some message levels fatal at runtime by setting
 /// the `G_DEBUG` environment variable (see
-/// [Running GLib Applications](glib-running.html)).
+/// [Running GLib Applications](running.html)).
 ///
 /// Libraries should not call this function, as it affects all messages logged
 /// by a process, including those from other libraries.
@@ -21087,16 +21511,17 @@ pub const mainCurrentSource = g_main_current_source;
 
 /// Returns the depth of the stack of calls to
 /// `glib.MainContext.dispatch` on any `glib.MainContext` in the current thread.
-/// That is, when called from the toplevel, it gives 0. When
+///
+/// That is, when called from the top level, it gives `0`. When
 /// called from within a callback from `glib.MainContext.iteration`
-/// (or `glib.MainLoop.run`, etc.) it returns 1. When called from within
+/// (or `glib.MainLoop.run`, etc.) it returns `1`. When called from within
 /// a callback to a recursive call to `glib.MainContext.iteration`,
-/// it returns 2. And so forth.
+/// it returns `2`. And so forth.
 ///
 /// This function is useful in a situation like the following:
-/// Imagine an extremely simple "garbage collected" system.
+/// Imagine an extremely simple ‘garbage collected’ system.
 ///
-/// ```
+/// ```c
 /// static GList *free_list;
 ///
 /// gpointer
@@ -21129,11 +21554,11 @@ pub const mainCurrentSource = g_main_current_source;
 /// This works from an application, however, if you want to do the same
 /// thing from a library, it gets more difficult, since you no longer
 /// control the main loop. You might think you can simply use an idle
-/// function to make the call to `free_allocated_memory`, but that
-/// doesn't work, since the idle function could be called from a
+/// function to make the call to ``free_allocated_memory``, but that
+/// doesn’t work, since the idle function could be called from a
 /// recursive callback. This can be fixed by using `glib.mainDepth`
 ///
-/// ```
+/// ```c
 /// gpointer
 /// allocate_memory (gsize size)
 /// {
@@ -21170,19 +21595,19 @@ pub const mainCurrentSource = g_main_current_source;
 /// problems with reentrancy. For instance, while waiting for data
 /// to be received from the network in response to a menu item,
 /// the menu item might be selected again. It might seem that
-/// one could make the menu item's callback return immediately
+/// one could make the menu item’s callback return immediately
 /// and do nothing if `glib.mainDepth` returns a value greater than 1.
 /// However, this should be avoided since the user then sees selecting
-/// the menu item do nothing. Furthermore, you'll find yourself adding
+/// the menu item do nothing. Furthermore, you’ll find yourself adding
 /// these checks all over your code, since there are doubtless many,
 /// many things that the user could do. Instead, you can use the
 /// following techniques:
 ///
-/// 1. Use `gtk_widget_set_sensitive` or modal dialogs to prevent
+/// 1. Use ``gtk_widget_set_sensitive`` or modal dialogs to prevent
 ///    the user from interacting with elements while the main
 ///    loop is recursing.
 ///
-/// 2. Avoid main loop recursion in situations where you can't handle
+/// 2. Avoid main loop recursion in situations where you can’t handle
 ///    arbitrary  callbacks. Instead, structure your code so that you
 ///    simply return to the main loop and then get called again when
 ///    there is more work to do.
@@ -21468,7 +21893,7 @@ pub const numberParserErrorQuark = g_number_parser_error_quark;
 /// This function may cause different actions on non-UNIX platforms.
 ///
 /// On Windows consider using the `G_DEBUGGER` environment
-/// variable (see [Running GLib Applications](glib-running.html)) and
+/// variable (see [Running GLib Applications](running.html)) and
 /// calling `glib.onErrorStackTrace` instead.
 extern fn g_on_error_query(p_prg_name: [*:0]const u8) void;
 pub const onErrorQuery = g_on_error_query;
@@ -21485,7 +21910,7 @@ pub const onErrorQuery = g_on_error_query;
 /// `glib.onErrorQuery`. If called directly, it will raise an
 /// exception, which will crash the program. If the `G_DEBUGGER` environment
 /// variable is set, a debugger will be invoked to attach and
-/// handle that exception (see [Running GLib Applications](glib-running.html)).
+/// handle that exception (see [Running GLib Applications](running.html)).
 extern fn g_on_error_stack_trace(p_prg_name: ?[*:0]const u8) void;
 pub const onErrorStackTrace = g_on_error_stack_trace;
 
@@ -22316,8 +22741,9 @@ pub const spacedPrimesClosest = g_spaced_primes_closest;
 
 /// Executes a child program asynchronously.
 ///
-/// See `glib.spawnAsyncWithPipes` for a full description; this function
-/// simply calls the `glib.spawnAsyncWithPipes` without any pipes.
+/// See `glib.spawnAsyncWithPipesAndFds` for a full description; this function
+/// simply calls the `glib.spawnAsyncWithPipes` without any pipes, which in turn
+/// calls `glib.spawnAsyncWithPipesAndFds`.
 ///
 /// You should call `glib.spawnClosePid` on the returned child process
 /// reference when you don't need it any more.
@@ -23240,7 +23666,7 @@ pub const testAddDataFunc = g_test_add_data_func;
 
 /// Creates a new test case.
 ///
-/// In constract to `glib.testAddDataFunc`, this function
+/// In contrast to `glib.testAddDataFunc`, this function
 /// is freeing `test_data` after the test run is complete.
 extern fn g_test_add_data_func_full(p_testpath: [*:0]const u8, p_test_data: ?*anyopaque, p_test_func: glib.TestDataFunc, p_data_free_func: ?glib.DestroyNotify) void;
 pub const testAddDataFuncFull = g_test_add_data_func_full;
@@ -23905,7 +24331,7 @@ pub const testTrapSubprocess = g_test_trap_subprocess;
 ///       }
 ///
 ///     // Reruns this same test in a subprocess
-///     g_autoptr(GStrv) envp = g_get_environ ();
+///     g_auto(GStrv) envp = g_get_environ ();
 ///     envp = g_environ_setenv (g_steal_pointer (&envp), "USER", "charlie", TRUE);
 ///     g_test_trap_subprocess_with_envp (NULL, envp, 0, G_TEST_SUBPROCESS_DEFAULT);
 ///     g_test_trap_assert_passed ();
@@ -23931,7 +24357,7 @@ pub const testTrapSubprocessWithEnvp = g_test_trap_subprocess_with_envp;
 /// priority, `glib.PRIORITY_DEFAULT`.
 ///
 /// The given `function` is called repeatedly until it returns
-/// `glib.SOURCE_REMOVE` or `FALSE`, at which point the timeout is
+/// `glib.SOURCE_REMOVE`, at which point the timeout is
 /// automatically destroyed and the function will not be called again. The first
 /// call to the function will be at the end of the first `interval`.
 ///
@@ -23939,12 +24365,12 @@ pub const testTrapSubprocessWithEnvp = g_test_trap_subprocess_with_envp;
 /// event sources. Thus they should not be relied on for precise timing.
 /// After each call to the timeout function, the time of the next
 /// timeout is recalculated based on the current time and the given interval
-/// (it does not try to 'catch up' time lost in delays).
+/// (it does not try to ‘catch up’ time lost in delays).
 ///
-/// See [mainloop memory management](main-loop.html`memory`-management-of-sources) for details
+/// See [main loop memory management](main-loop.html`memory`-management-of-sources) for details
 /// on how to handle the return value and memory management of `data`.
 ///
-/// If you want to have a timer in the "seconds" range and do not care
+/// If you want to have a timer in the ‘seconds’ range and do not care
 /// about the exact time of the first call of the timer, use the
 /// `glib.timeoutAddSeconds` function; this function allows for more
 /// optimizations and more efficient system power usage.
@@ -23964,8 +24390,11 @@ extern fn g_timeout_add(p_interval: c_uint, p_function: glib.SourceFunc, p_data:
 pub const timeoutAdd = g_timeout_add;
 
 /// Sets a function to be called at regular intervals, with the given
-/// priority.  The function is called repeatedly until it returns
-/// `FALSE`, at which point the timeout is automatically destroyed and
+/// priority.
+///
+/// The function is called repeatedly until it returns
+/// `glib.SOURCE_REMOVE`, at which point the timeout is automatically
+/// destroyed and
 /// the function will not be called again.  The `notify` function is
 /// called when the timeout is destroyed.  The first call to the
 /// function will be at the end of the first `interval`.
@@ -23974,9 +24403,9 @@ pub const timeoutAdd = g_timeout_add;
 /// event sources. Thus they should not be relied on for precise timing.
 /// After each call to the timeout function, the time of the next
 /// timeout is recalculated based on the current time and the given interval
-/// (it does not try to 'catch up' time lost in delays).
+/// (it does not try to ‘catch up’ time lost in delays).
 ///
-/// See [mainloop memory management](main-loop.html`memory`-management-of-sources) for details
+/// See [main loop memory management](main-loop.html`memory`-management-of-sources) for details
 /// on how to handle the return value and memory management of `data`.
 ///
 /// This internally creates a main loop source using
@@ -24004,8 +24433,8 @@ pub const timeoutAddOnce = g_timeout_add_once;
 /// Sets a function to be called at regular intervals with the default
 /// priority, `glib.PRIORITY_DEFAULT`.
 ///
-/// The function is called repeatedly until it returns `glib.SOURCE_REMOVE`
-/// or `FALSE`, at which point the timeout is automatically destroyed
+/// The function is called repeatedly until it returns `glib.SOURCE_REMOVE`,
+/// at which point the timeout is automatically destroyed
 /// and the function will not be called again.
 ///
 /// This internally creates a main loop source using
@@ -24019,7 +24448,7 @@ pub const timeoutAddOnce = g_timeout_add_once;
 /// of one second. If you need finer precision and have such a timeout,
 /// you may want to use `glib.timeoutAdd` instead.
 ///
-/// See [mainloop memory management](main-loop.html`memory`-management-of-sources) for details
+/// See [main loop memory management](main-loop.html`memory`-management-of-sources) for details
 /// on how to handle the return value and memory management of `data`.
 ///
 /// The interval given is in terms of monotonic time, not wall clock
@@ -24029,15 +24458,15 @@ pub const timeoutAddSeconds = g_timeout_add_seconds;
 
 /// Sets a function to be called at regular intervals, with `priority`.
 ///
-/// The function is called repeatedly until it returns `glib.SOURCE_REMOVE`
-/// or `FALSE`, at which point the timeout is automatically destroyed and
+/// The function is called repeatedly until it returns `glib.SOURCE_REMOVE`,
+/// at which point the timeout is automatically destroyed and
 /// the function will not be called again.
 ///
 /// Unlike `glib.timeoutAdd`, this function operates at whole second
 /// granularity. The initial starting point of the timer is determined by the
 /// implementation and the implementation is expected to group multiple timers
-/// together so that they fire all at the same time. To allow this grouping, the
-/// `interval` to the first timer is rounded and can deviate up to one second
+/// together so that they fire all at the same time. To allow this grouping,
+/// the `interval` to the first timer is rounded and can deviate up to one second
 /// from the specified interval. Subsequent timer iterations will generally run
 /// at the specified interval.
 ///
@@ -24046,7 +24475,7 @@ pub const timeoutAddSeconds = g_timeout_add_seconds;
 /// After each call to the timeout function, the time of the next
 /// timeout is recalculated based on the current time and the given `interval`
 ///
-/// See [mainloop memory management](main-loop.html`memory`-management-of-sources) for details
+/// See [main loop memory management](main-loop.html`memory`-management-of-sources) for details
 /// on how to handle the return value and memory management of `data`.
 ///
 /// If you want timing more precise than whole seconds, use
@@ -24054,7 +24483,7 @@ pub const timeoutAddSeconds = g_timeout_add_seconds;
 ///
 /// The grouping of timers to fire at the same time results in a more power
 /// and CPU efficient behavior so if your timer is in multiples of seconds
-/// and you don't require the first timer exactly one second from now, the
+/// and you don’t require the first timer exactly one second from now, the
 /// use of `glib.timeoutAddSeconds` is preferred over
 /// `glib.timeoutAdd`.
 ///
@@ -24900,14 +25329,14 @@ pub const utf8TruncateMiddle = g_utf8_truncate_middle;
 /// routines require valid UTF-8 as input; so data read from a file
 /// or the network should be checked with ``glib.utf8Validate`` before
 /// doing anything else with it.
-extern fn g_utf8_validate(p_str: [*]const u8, p_max_len: isize, p_end: ?*[*:0]const u8) c_int;
+extern fn g_utf8_validate(p_str: [*]const u8, p_max_len: isize, p_end: ?*[*]const u8) c_int;
 pub const utf8Validate = g_utf8_validate;
 
 /// Validates UTF-8 encoded text.
 ///
 /// As with `glib.utf8Validate`, but `max_len` must be set, and hence this
 /// function will always return `FALSE` if any of the bytes of `str` are nul.
-extern fn g_utf8_validate_len(p_str: [*]const u8, p_max_len: usize, p_end: ?*[*:0]const u8) c_int;
+extern fn g_utf8_validate_len(p_str: [*]const u8, p_max_len: usize, p_end: ?*[*]const u8) c_int;
 pub const utf8ValidateLen = g_utf8_validate_len;
 
 /// A wrapper for the POSIX `utime` function. The `utime` function
@@ -25713,7 +26142,7 @@ pub const MAXUINT8 = 255;
 /// Like `gtk_micro_version`, but from the headers used at
 /// application compile time, rather than from the library
 /// linked against at application run time.
-pub const MICRO_VERSION = 2;
+pub const MICRO_VERSION = 1;
 /// The minimum value which can be held in a `gint16`.
 pub const MININT16 = -32768;
 /// The minimum value which can be held in a `gint32`.
@@ -25727,7 +26156,7 @@ pub const MININT8 = -128;
 /// Like `gtk_minor_version`, but from the headers used at
 /// application compile time, rather than from the library
 /// linked against at application run time.
-pub const MINOR_VERSION = 84;
+pub const MINOR_VERSION = 86;
 pub const MODULE_SUFFIX = "so";
 /// If a long option in the main group has this name, it is not treated as a
 /// regular option. Instead it collects all non-option arguments which would

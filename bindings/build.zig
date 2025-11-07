@@ -76,9 +76,11 @@ pub const CompileResources = struct {
         const run = cr.b.addRunArtifact(build_gresources_xml_exe orelse exe: {
             const exe = cr.b.addExecutable(.{
                 .name = "build-gresources-xml",
-                .root_source_file = cr.b.path("build/build_gresources_xml.zig"),
-                .target = cr.b.graph.host,
-                .optimize = .Debug,
+                .root_module = cr.b.createModule(.{
+                    .root_source_file = cr.b.path("build/build_gresources_xml.zig"),
+                    .target = cr.b.graph.host,
+                    .optimize = .Debug,
+                }),
             });
             build_gresources_xml_exe = exe;
             break :exe exe;
@@ -179,6 +181,19 @@ pub fn build(b: *std.Build) void {
     });
     test_step.dependOn(&b.addRunArtifact(vips8_test).step);
 
+    const gio2 = b.addModule("gio2", .{
+        .root_source_file = b.path(b.pathJoin(&.{ "src", "gio2", "gio2" ++ ".zig" })),
+        .target = target,
+        .optimize = optimize,
+    });
+    libraries.gio2.linkTo(gio2);
+    gio2.addImport("compat", compat);
+
+    const gio2_test = b.addTest(.{
+        .root_module = gio2,
+    });
+    test_step.dependOn(&b.addRunArtifact(gio2_test).step);
+
     const gobject2 = b.addModule("gobject2", .{
         .root_source_file = b.path(b.pathJoin(&.{ "src", "gobject2", "gobject2" ++ ".zig" })),
         .target = target,
@@ -200,17 +215,50 @@ pub fn build(b: *std.Build) void {
     libraries.glib2.linkTo(glib2);
     glib2.addImport("compat", compat);
 
+    const glib2_test_mod = b.createModule(.{
+        .root_source_file = b.path("src/glib2/glib2.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    libraries.glib2.linkTo(glib2_test_mod);
+    libraries.gobject2.linkTo(glib2_test_mod);
+    // Some deprecated thread functions require linking gthread-2.0
+    glib2_test_mod.linkSystemLibrary("gthread-2.0", .{ .use_pkg_config = .force });
+    glib2_test_mod.addImport("compat", compat);
+    glib2_test_mod.addImport("glib2", glib2_test_mod);
+
     const glib2_test = b.addTest(.{
-        .root_module = glib2,
+        .root_module = glib2_test_mod,
     });
     test_step.dependOn(&b.addRunArtifact(glib2_test).step);
 
+    const gmodule2 = b.addModule("gmodule2", .{
+        .root_source_file = b.path(b.pathJoin(&.{ "src", "gmodule2", "gmodule2" ++ ".zig" })),
+        .target = target,
+        .optimize = optimize,
+    });
+    libraries.gmodule2.linkTo(gmodule2);
+    gmodule2.addImport("compat", compat);
+
+    const gmodule2_test = b.addTest(.{
+        .root_module = gmodule2,
+    });
+    test_step.dependOn(&b.addRunArtifact(gmodule2_test).step);
+
+    vips8.addImport("gio2", gio2);
     vips8.addImport("gobject2", gobject2);
     vips8.addImport("glib2", glib2);
+    vips8.addImport("gmodule2", gmodule2);
     vips8.addImport("vips8", vips8);
+    gio2.addImport("gobject2", gobject2);
+    gio2.addImport("glib2", glib2);
+    gio2.addImport("gmodule2", gmodule2);
+    gio2.addImport("gio2", gio2);
     gobject2.addImport("glib2", glib2);
     gobject2.addImport("gobject2", gobject2);
     glib2.addImport("glib2", glib2);
+    gmodule2.addImport("glib2", glib2);
+    gmodule2.addImport("gmodule2", gmodule2);
     const docs_mod = b.createModule(.{
         .root_source_file = b.path("src/root/root.zig"),
         .target = target,
@@ -227,13 +275,19 @@ pub fn build(b: *std.Build) void {
     });
     docs_step.dependOn(&install_docs.step);
     docs_mod.addImport("vips8", vips8);
+    docs_mod.addImport("gio2", gio2);
     docs_mod.addImport("gobject2", gobject2);
     docs_mod.addImport("glib2", glib2);
+    docs_mod.addImport("gmodule2", gmodule2);
 }
 
 pub const libraries = struct {
     pub const vips8: Library = .{
-        .system_libraries = &.{"vips"},
+        .system_libraries = &.{ "vips", "vips" },
+    };
+
+    pub const gio2: Library = .{
+        .system_libraries = &.{"gio-2.0"},
     };
 
     pub const gobject2: Library = .{
@@ -242,5 +296,9 @@ pub const libraries = struct {
 
     pub const glib2: Library = .{
         .system_libraries = &.{"glib-2.0"},
+    };
+
+    pub const gmodule2: Library = .{
+        .system_libraries = &.{"gmodule-2.0"},
     };
 };
