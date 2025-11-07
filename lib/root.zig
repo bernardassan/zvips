@@ -1,9 +1,10 @@
 const std = @import("std");
 const builtin = @import("builtin");
-const varargs = @import("varargs.zig");
-const Options = @import("Options.zig");
 
-pub const std_options: std.Options = .{ .log_level = .debug };
+pub const Image = @import("Image.zig");
+const Options = @import("Options.zig");
+const varargs = @import("varargs.zig");
+
 pub const logger = std.log.scoped(.zvips);
 
 pub const c = struct {
@@ -14,11 +15,11 @@ pub const c = struct {
 
     extern "c" fn setenv(name: [*:0]const u8, value: [*:0]const u8, overwrite: i32) i32;
 };
-pub const Image = @import("Image.zig");
 
-/// Docs `c.vips.init`
-/// enables `c.vips.leakSet` in .Debug mode
+/// enables `c.vips.leakSet` in `.Debug` mode
+/// See `c.vips.init`
 pub fn init(app_name: [:0]const u8) !void {
+    disableLibsNotFoundStartupWarning();
     if (c.vips.init(app_name) != 0) return error.FailedToStart;
     switch (builtin.mode) {
         .Debug => {
@@ -33,48 +34,31 @@ pub fn init(app_name: [:0]const u8) !void {
     }
 }
 
-/// Docs `c.vips.Image.writeToFile`
-pub fn convert(input: union(enum) {
-    file: []const u8,
-    img: Image,
-}, output_file: []const u8, options: ?Options.Save) !void {
-    var buf: [256]u8 = undefined;
-    var fba: std.heap.FixedBufferAllocator = .init(&buf);
-
-    const buf_alloc = fba.allocator();
-    defer fba.reset();
-
-    const img = switch (input) {
-        .file => |file| Image.newFromFile(file, .{ .heif = .{} }) orelse {
-            errorExit("unable to open file", .{});
-        },
-        .img => |img| img,
-    };
-    defer img.deinit();
-
-    const file_with_options: [:0]const u8 = Options.toString(output_file, .{ .save = options }, buf_alloc) catch @panic("Oom");
-
-    if (varargs.call(c.vips.Image.writeToFile, .{ img.cimage, file_with_options }) != 0) return error.ConvertionError;
-
-    switch (input) {
-        .file => |file| logger.info("convert {s} to {s}", .{ file, file_with_options }),
-        .img => logger.info("convert image to {s}", .{file_with_options}),
-    }
+/// Must be run if leak checker and profiler is enabled
+/// See `c.vips.shutdown`
+pub fn deinit() void {
+    c.vips.shutdown();
 }
 
-/// Docs `c.vips.errorExit`
+/// See `c.vips.errorExit`
 pub fn errorExit(comptime efmt: []const u8, args: anytype) noreturn {
     std.debug.print(efmt, args);
     c.vips.errorExit(null, c.null);
     unreachable;
 }
 
-/// Docs `c.vips.leakSet`
+/// This will print a table of any ref leaks on exit, very handy for
+/// development. See `c.vips.leakSet`
 pub fn leakSet(leak: bool) void {
     c.vips.leakSet(@intFromBool(leak));
 }
 
-pub fn defaultLogger() void {
+// Disable unable to load poppler, openslide and magick libs at startup
+// vips-poppler.so -- libpoppler-glib.so.8
+// vips-openslide.so -- libopenslide.so.1
+// vips-magick.so -- libMagickCore-7.Q16HDRI.so.10
+// NOTE: Must be called before `init`
+fn disableLibsNotFoundStartupWarning() void {
     _ = c.glib.logSetHandler("VIPS", c.glib.LogLevelFlags.flags_level_warning, vipsWarningHandler, c.null);
 }
 
