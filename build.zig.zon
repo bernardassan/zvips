@@ -2,7 +2,7 @@
     .name = .zvips,
     .version = "0.1.0",
     .fingerprint = 0x9a2159ec397598f9, // Changing this has security and trust implications.
-    .minimum_zig_version = "0.15.0-dev.1393+493265486",
+    .minimum_zig_version = "0.15.2",
     .dependencies = .{
         .@"zig-gobject" = .{
             .url = "git+https://github.com/ianprime0509/zig-gobject.git#e5795f47d5dca9540d952c22625dbb4924d6915a",

@@ -16,7 +16,7 @@ pub const c = struct {
     extern "c" fn setenv(name: [*:0]const u8, value: [*:0]const u8, overwrite: i32) i32;
 };
 
-/// enables `c.vips.leakSet` in `.Debug` mode
+/// enables `c.vips.leakSet` in `.Debug` mode.
 /// See `c.vips.init`
 pub fn init(app_name: [:0]const u8) !void {
     disableLibsNotFoundStartupWarning();
@@ -34,7 +34,7 @@ pub fn init(app_name: [:0]const u8) !void {
     }
 }
 
-/// Must be run if leak checker and profiler is enabled
+/// Must be run if leak checker and profiler is enabled.
 /// See `c.vips.shutdown`
 pub fn deinit() void {
     c.vips.shutdown();
